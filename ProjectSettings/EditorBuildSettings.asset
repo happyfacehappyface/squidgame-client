@@ -11,4 +11,10 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/WaitingScene.unity
     guid: a934c320f765c63429e52ed4123c6617
+  - enabled: 1
+    path: Assets/Scenes/DalgonaScene.unity
+    guid: 798f2f1d78cfc764bbe4f9498023086a
+  - enabled: 1
+    path: Assets/Scenes/TogOfWarScene.unity
+    guid: 3f8972fdfe76c4f49a06db0daa8f7408
   m_configObjects: {}

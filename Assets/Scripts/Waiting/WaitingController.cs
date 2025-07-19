@@ -2,28 +2,24 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class WaitingController : MonoBehaviour
+public class WaitingController : MonoBehaviour, ISubGameController
 {
-    [SerializeField] private GameObject _gameStarted;
 
-    protected void Start()
+
+    private InGameController _inGameController;
+
+
+    public void OnSubGameStarted(InGameController inGameController)
     {
-        ManualStart();
+        _inGameController = inGameController;
     }
 
-    private void ManualStart()
+    public void ManualUpdate()
     {
-        _gameStarted.SetActive(false);
-        NetworkManager.Instance.SendMessageToServer(new RequestPacketData.ReadyGame());
+
     }
 
-    public void OnResponseReadyGame(bool isSuccess, ResponsePacketData.ReadyGame data)
-    {
-        if (isSuccess)
-        {
-            _gameStarted.SetActive(true);
-        }
-    }
+    
 
 
 }

@@ -184,9 +184,24 @@ public class NetworkManager : MonoBehaviour
         {
             typeof(ResponsePacketData.ReadyGame),
             (isSuccess, data) => {
-                FindObjectOfType<WaitingController>()?.OnResponseReadyGame(isSuccess, (ResponsePacketData.ReadyGame)data);
+                FindObjectOfType<InGameController>()?.OnResponseReadyGame(isSuccess, (ResponsePacketData.ReadyGame)data);
             }
         },
+
+        {
+            typeof(ResponsePacketData.ReadySubGame),
+            (isSuccess, data) => {
+                FindObjectOfType<InGameController>()?.OnResponseReadySubGame(isSuccess, (ResponsePacketData.ReadySubGame)data);
+            }
+        },
+
+        {
+            typeof(ResponsePacketData.DalgonaGameStarted),
+            (isSuccess, data) => {
+                FindObjectOfType<InGameController>()?.OnResponseDalgonaGameStarted(isSuccess, (ResponsePacketData.DalgonaGameStarted)data);
+            }
+        },
+
 
     };
 
@@ -199,6 +214,8 @@ public class NetworkManager : MonoBehaviour
         { 1002, typeof(RequestPacketData.LeaveRoom) },
         { 1004, typeof(RequestPacketData.StartGame) },
         { 1005, typeof(RequestPacketData.ReadyGame) },
+
+        { 2001, typeof(RequestPacketData.ReadySubGame) },
         
     };
 
@@ -210,6 +227,9 @@ public class NetworkManager : MonoBehaviour
         { 1003, typeof(ResponsePacketData.PlayerCountChanged) },
         { 1004, typeof(ResponsePacketData.StartGame) },
         { 1005, typeof(ResponsePacketData.ReadyGame) },
+
+        { 2001, typeof(ResponsePacketData.ReadySubGame) },
+        { 2101, typeof(ResponsePacketData.DalgonaGameStarted) },
         
     };
 
@@ -340,6 +360,8 @@ public abstract record RequestPacketData
     public sealed record LeaveRoom() : RequestPacketData;
     public sealed record StartGame() : RequestPacketData;
     public sealed record ReadyGame() : RequestPacketData;
+
+    public sealed record ReadySubGame() : RequestPacketData;
     
 }
 
@@ -352,6 +374,11 @@ public abstract record ResponsePacketData
     public sealed record PlayerCountChanged(int playerCount) : ResponsePacketData;
     public sealed record StartGame(int myIndex, string[] names) : ResponsePacketData;
     public sealed record ReadyGame() : ResponsePacketData;
+
+    public sealed record ReadySubGame() : ResponsePacketData;
+
+
+    public sealed record DalgonaGameStarted(int timeLimitMs) : ResponsePacketData;
 
 
 }

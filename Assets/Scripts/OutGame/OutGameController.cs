@@ -7,6 +7,7 @@ using UnityEngine.SceneManagement;
 
 public class OutGameController : MonoBehaviour
 {
+    private ResponsePacketData.StartGame _startGameData;
 
     [SerializeField] private GameObject _tabTitle;
     [SerializeField] private GameObject _tabInRoom;
@@ -122,7 +123,17 @@ public class OutGameController : MonoBehaviour
     {
         if (isSuccess)
         {
+            _startGameData = data;
+            
+            // 씬 로드 완료 후 실행될 이벤트 등록
+            SceneManager.sceneLoaded += OnInGameSceneLoaded;
             SceneManager.LoadScene("WaitingScene");
         }
+    }
+
+    private void OnInGameSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        SceneManager.sceneLoaded -= OnInGameSceneLoaded;
+        FindObjectOfType<InGameController>().ManualStart(_startGameData);
     }
 }
