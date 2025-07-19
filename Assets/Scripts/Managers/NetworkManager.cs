@@ -135,17 +135,6 @@ public class NetworkManager : MonoBehaviour
 #if !UNITY_WEBGL || UNITY_EDITOR
         websocket?.DispatchMessageQueue();
 #endif
-
-
-
-        
-        if (_isReady)
-        {
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                SendMessageToServer(new RequestPacketData.Ping());
-            }
-        }
         
     }
 
@@ -168,6 +157,24 @@ public class NetworkManager : MonoBehaviour
                 Utils.Log("Pong");
             }
         },
+        {
+            typeof(ResponsePacketData.EnterRoom),
+            (isSuccess, data) => {
+                FindObjectOfType<OutGameController>()?.OnResponseEnterRoom(isSuccess, (ResponsePacketData.EnterRoom)data);
+            }
+        },
+        {
+            typeof(ResponsePacketData.LeaveRoom),   
+            (isSuccess, data) => {
+                FindObjectOfType<OutGameController>()?.OnResponseLeaveRoom(isSuccess, (ResponsePacketData.LeaveRoom)data);
+            }
+        },
+        {
+            typeof(ResponsePacketData.PlayerCountChanged),
+            (isSuccess, data) => {
+                FindObjectOfType<OutGameController>()?.OnResponsePlayerCountChanged(isSuccess, (ResponsePacketData.PlayerCountChanged)data);
+            }
+        }
 
     };
 
@@ -176,12 +183,17 @@ public class NetworkManager : MonoBehaviour
     private static readonly Dictionary<int, Type> _requestSignalToType = new()
     {
         { 1, typeof(RequestPacketData.Ping) },
+        { 1001, typeof(RequestPacketData.EnterRoom) },
+        { 1002, typeof(RequestPacketData.LeaveRoom) },
         
     };
 
     private static readonly Dictionary<int, Type> _responseSignalToType = new()
     {
         { 1, typeof(ResponsePacketData.Ping) },
+        { 1001, typeof(ResponsePacketData.EnterRoom) },
+        { 1002, typeof(ResponsePacketData.LeaveRoom) },
+        { 1003, typeof(ResponsePacketData.PlayerCountChanged) },
 
         
     };
@@ -309,6 +321,8 @@ public record ResponsePacket(int signal, ResponsePacketData data);
 public abstract record RequestPacketData
 {
     public sealed record Ping() : RequestPacketData;
+    public sealed record EnterRoom() : RequestPacketData;
+    public sealed record LeaveRoom() : RequestPacketData;
     
 }
 
@@ -316,6 +330,9 @@ public abstract record ResponsePacketData
 {
     public sealed record Error(int code) : ResponsePacketData;
     public sealed record Ping() : ResponsePacketData;
+    public sealed record EnterRoom() : ResponsePacketData;
+    public sealed record LeaveRoom() : ResponsePacketData;
+    public sealed record PlayerCountChanged(int playerCount) : ResponsePacketData;
 
 }
 
