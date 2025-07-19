@@ -174,7 +174,19 @@ public class NetworkManager : MonoBehaviour
             (isSuccess, data) => {
                 FindObjectOfType<OutGameController>()?.OnResponsePlayerCountChanged(isSuccess, (ResponsePacketData.PlayerCountChanged)data);
             }
-        }
+        },
+        {
+            typeof(ResponsePacketData.StartGame),
+            (isSuccess, data) => {
+                FindObjectOfType<OutGameController>()?.OnResponseStartGame(isSuccess, (ResponsePacketData.StartGame)data);
+            }
+        },
+        {
+            typeof(ResponsePacketData.ReadyGame),
+            (isSuccess, data) => {
+                FindObjectOfType<WaitingController>()?.OnResponseReadyGame(isSuccess, (ResponsePacketData.ReadyGame)data);
+            }
+        },
 
     };
 
@@ -185,6 +197,8 @@ public class NetworkManager : MonoBehaviour
         { 1, typeof(RequestPacketData.Ping) },
         { 1001, typeof(RequestPacketData.EnterRoom) },
         { 1002, typeof(RequestPacketData.LeaveRoom) },
+        { 1004, typeof(RequestPacketData.StartGame) },
+        { 1005, typeof(RequestPacketData.ReadyGame) },
         
     };
 
@@ -194,7 +208,8 @@ public class NetworkManager : MonoBehaviour
         { 1001, typeof(ResponsePacketData.EnterRoom) },
         { 1002, typeof(ResponsePacketData.LeaveRoom) },
         { 1003, typeof(ResponsePacketData.PlayerCountChanged) },
-
+        { 1004, typeof(ResponsePacketData.StartGame) },
+        { 1005, typeof(ResponsePacketData.ReadyGame) },
         
     };
 
@@ -323,6 +338,8 @@ public abstract record RequestPacketData
     public sealed record Ping() : RequestPacketData;
     public sealed record EnterRoom() : RequestPacketData;
     public sealed record LeaveRoom() : RequestPacketData;
+    public sealed record StartGame() : RequestPacketData;
+    public sealed record ReadyGame() : RequestPacketData;
     
 }
 
@@ -333,6 +350,9 @@ public abstract record ResponsePacketData
     public sealed record EnterRoom() : ResponsePacketData;
     public sealed record LeaveRoom() : ResponsePacketData;
     public sealed record PlayerCountChanged(int playerCount) : ResponsePacketData;
+    public sealed record StartGame(int myIndex, string[] names) : ResponsePacketData;
+    public sealed record ReadyGame() : ResponsePacketData;
+
 
 }
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class OutGameController : MonoBehaviour
 {
@@ -32,6 +33,11 @@ public class OutGameController : MonoBehaviour
     public void OnClickLeaveRoom()
     {
         RequestLeaveRoom();
+    }
+
+    public void OnClickStartGame()
+    {
+        RequestStartGame();
     }
 
     private void ManualStart()
@@ -69,6 +75,13 @@ public class OutGameController : MonoBehaviour
         NetworkManager.Instance.SendMessageToServer(new RequestPacketData.LeaveRoom());
     }
 
+    public void RequestStartGame()
+    {
+        _waitForServer.SetActive(true);
+        NetworkManager.Instance.SendMessageToServer(new RequestPacketData.StartGame());
+    }
+
+
     public void OnResponseEnterRoom(bool isSuccess, ResponsePacketData.EnterRoom data)
     {
         if (isSuccess)
@@ -102,6 +115,14 @@ public class OutGameController : MonoBehaviour
         if (isSuccess)
         {
             _playerCountText.text = data.playerCount.ToString();
+        }
+    }
+
+    public void OnResponseStartGame(bool isSuccess, ResponsePacketData.StartGame data)
+    {
+        if (isSuccess)
+        {
+            SceneManager.LoadScene("WaitingScene");
         }
     }
 }
