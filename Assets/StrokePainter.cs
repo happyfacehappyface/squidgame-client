@@ -2,26 +2,43 @@ using UnityEngine;
 using System.Collections.Generic;
 
 /// <summary>
-/// A Dalgona game controller that can generate Sierpinski triangle shapes using a recursive method.
-/// This version is known to produce visual artifacts (diagonal lines) as part of its generation.
+/// A Dalgona game controller that uses multiple LineRenderers to create complex, non-continuous shapes.
+/// This version correctly generates Sierpinski triangles without visual artifacts.
 /// </summary>
 public class StrokePainter : MonoBehaviour
 {
+    public enum DalgonaShapeType
+    {
+        SierpinskiTriangle,
+        Circle,
+        Star,
+        CustomFromProfile
+    }
+
+    [Header("Shape Selection")]
+    [Tooltip("The type of shape to generate for the game.")]
+    public DalgonaShapeType shapeToGenerate = DalgonaShapeType.SierpinskiTriangle;
+
     [Header("Setup")]
     [Tooltip("Prefab for the line a player draws. Must have a LineRenderer.")]
     public GameObject strokePrefab;
-    [Tooltip("The single LineRenderer that will display the generated shape.")]
-    public LineRenderer dalgonaShape;
+    [Tooltip("A container object that will hold all the generated dalgona shape segments.")]
+    public Transform dalgonaShapeContainer;
+    [Tooltip("A prefab for a single segment of the dalgona shape. Must have a LineRenderer.")]
+    public GameObject dalgonaSegmentPrefab;
 
-    [Header("Generation")]
-    [Tooltip("The overall size of the generated triangle.")]
-    public float sierpinskiSize = 10f;
-    [Tooltip("The recursion depth for the Sierpinski triangle.")]
-    [Range(0, 5)]
-    public int sierpinskiDepth = 2;
-    [Tooltip("How many points to add along each edge for collision precision.")]
-    [Range(0, 20)]
-    public int edgeSubdivisions = 5;
+    [Header("General Settings")]
+    [Tooltip("The overall size of all generated shapes.")]
+    public float shapeSize = 10f;
+
+    [Header("Game Difficulty")]
+    [Tooltip("The difficulty level, which affects shape complexity.")]
+    [Range(1, 3)]
+    public int difficultyLevel = 1;
+
+    [Header("Custom Shape Settings")]
+    [Tooltip("A profile asset containing the points for a custom shape.")]
+    public DalgonaShapeProfile customShapeProfile;
 
     [Header("Game Rules")]
     [Tooltip("Allowed distance from the shape's path.")]
@@ -33,70 +50,348 @@ public class StrokePainter : MonoBehaviour
     [Header("Visuals")]
     [Tooltip("Material to apply to the line when the game is over.")]
     public Material failedMaterial;
-    [Tooltip("The LineRenderer used to visualize the tolerance zone.")]
-    public LineRenderer toleranceVisualizer;
+    [Tooltip("A container for the tolerance visualizers. Will be auto-populated.")]
+    public Transform toleranceVisualizerContainer;
 
-    // --- Private members ---
+    // --- Private State ---
+    private List<LineRenderer> dalgonaLines = new List<LineRenderer>();
+    private List<LineRenderer> toleranceLines = new List<LineRenderer>();
+
     private Camera mainCamera;
     private bool isGameOver, isGameWon, isDrawing;
     private LineRenderer currentStrokeRenderer;
-    private bool[] shapePointsCovered;
-    private int coveredPointsCount;
+
+    private List<bool[]> completionPointTrackers;
+    private int totalPointsInShape = 0;
+    private int coveredPointsCount = 0;
 
     void Start()
     {
         mainCamera = Camera.main;
-        if (dalgonaShape == null || strokePrefab == null)
+        if (dalgonaShapeContainer == null || strokePrefab == null || dalgonaSegmentPrefab == null || toleranceVisualizerContainer == null)
         {
-            Debug.LogError("Dalgona Shape or Stroke Prefab is not assigned!");
+            Debug.LogError("One or more required prefabs/containers are not assigned!");
             this.enabled = false;
+            return;
         }
+
+        // If no shape is present in the container, generate it at runtime.
+        if (dalgonaShapeContainer.childCount == 0)
+        {
+            Debug.Log("Dalgona shape not found, generating a new one at runtime.");
+            GenerateShape();
+        }
+        // If a shape was pre-generated in the editor, we need to find the LineRenderers and initialize the game state.
         else
         {
-            ResetCompletionTracking();
-            SetupToleranceVisualizer();
+            Debug.Log("Pre-generated Dalgona shape found, initializing from scene.");
+            dalgonaLines.Clear();
+            foreach (Transform child in dalgonaShapeContainer)
+            {
+                var lr = child.GetComponent<LineRenderer>();
+                if (lr != null)
+                {
+                    dalgonaLines.Add(lr);
+                }
+            }
+            InitializeAfterGeneration();
         }
     }
 
-    void Update()
+    [ContextMenu("Generate Shape")]
+    private void GenerateShape()
     {
-        if (isGameOver || isGameWon) return;
-        if (Input.GetMouseButtonDown(0)) StartDrawing();
-        if (Input.GetMouseButton(0) && isDrawing) ContinueDrawing();
-        if (Input.GetMouseButtonUp(0) && isDrawing) StopDrawing();
-    }
-    
-    [ContextMenu("Generate Sierpinski Triangle")]
-    private void GenerateSierpinskiTriangle()
-    {
-        if (dalgonaShape == null) { Debug.LogError("Dalgona Shape is not assigned!", this); return; }
+        ClearShape(); // Clear existing shapes before generating new ones
 
-        List<Vector3> points = new List<Vector3>();
-        float halfSize = sierpinskiSize / 2f;
+        switch (shapeToGenerate)
+        {
+            case DalgonaShapeType.SierpinskiTriangle:
+                GenerateTriangleByLevel(difficultyLevel);
+                break;
+            case DalgonaShapeType.Circle:
+                GenerateCircleByLevel(difficultyLevel);
+                break;
+            case DalgonaShapeType.Star:
+                GenerateStarByLevel(difficultyLevel);
+                break;
+            case DalgonaShapeType.CustomFromProfile:
+                GenerateCustomShape();
+                break;
+        }
+
+        InitializeAfterGeneration();
+        Debug.Log($"Generated {shapeToGenerate} (Level {difficultyLevel}) with {dalgonaLines.Count} segments and {totalPointsInShape} total points.");
+    }
+
+    private void GenerateTriangleByLevel(int level)
+    {
+        float halfSize = shapeSize / 2f;
         float height = halfSize * Mathf.Sqrt(3);
 
         Vector3 p1 = new Vector3(0, height / 2f, 0);
         Vector3 p2 = new Vector3(-halfSize, -height / 2f, 0);
         Vector3 p3 = new Vector3(halfSize, -height / 2f, 0);
 
-        SierpinskiRecursive(points, p1, p2, p3, sierpinskiDepth);
-
-        dalgonaShape.positionCount = points.Count;
-        dalgonaShape.SetPositions(points.ToArray());
-
-        ResetCompletionTracking();
-        SetupToleranceVisualizer();
-        Debug.Log($"Generated Sierpinski triangle with depth {sierpinskiDepth}, containing {points.Count} points.");
+        int depth;
+        switch (level)
+        {
+            case 1:
+                depth = 0; // A single triangle
+                break;
+            case 2:
+                depth = 1; // Basic Sierpinski
+                break;
+            case 3:
+                depth = 2; // Less Complex Sierpinski
+                break;
+            default:
+                depth = 0;
+                break;
+        }
+        SierpinskiRecursive(p1, p2, p3, depth);
     }
 
-    private void SierpinskiRecursive(List<Vector3> points, Vector3 p1, Vector3 p2, Vector3 p3, int depth)
+    private void GenerateCircleByLevel(int level)
+    {
+        const int segments = 60;
+        float radius = shapeSize / 2f;
+
+        switch (level)
+        {
+            case 1:
+                CreateCircleLine(Vector3.zero, radius, segments);
+                break;
+            case 2:
+                // Venn Diagram with 3 circles in a triangular layout
+                float vennRadius = shapeSize / 2.9f;
+                float offset = vennRadius * 0.8f;
+                CreateCircleLine(new Vector3(0, offset, 0), vennRadius, segments);
+                CreateCircleLine(new Vector3(-offset, -offset * 0.5f, 0), vennRadius, segments);
+                CreateCircleLine(new Vector3(offset, -offset * 0.5f, 0), vennRadius, segments);
+                break;
+            case 3:
+                // Mosquito Coil
+                GenerateSpiral();
+                break;
+        }
+    }
+
+    private void GenerateStarByLevel(int level)
+    {
+        float outerRadius = shapeSize / 2f;
+        switch (level)
+        {
+            case 1:
+                // 5 points, pointed up
+                CreateStarLine(5, outerRadius, outerRadius * 0.5f, Vector3.zero, 90f);
+                break;
+            case 2:
+                // Shooting Star
+                GenerateShootingStar();
+                break;
+            case 3:
+                // 12 points, pointed up
+                CreateStarLine(12, outerRadius, outerRadius * 0.7f, Vector3.zero, 90f);
+                break;
+        }
+    }
+
+    private void CreateCircleLine(Vector3 center, float radius, int segments)
+    {
+        GameObject segmentGO = Instantiate(dalgonaSegmentPrefab, dalgonaShapeContainer);
+        LineRenderer lr = segmentGO.GetComponent<LineRenderer>();
+        lr.useWorldSpace = true;
+
+        lr.positionCount = segments + 1;
+        lr.loop = true;
+
+        float angleStep = 360f / segments;
+        for (int i = 0; i <= segments; i++)
+        {
+            float angle = i * angleStep * Mathf.Deg2Rad;
+            float x = center.x + Mathf.Cos(angle) * radius;
+            float y = center.y + Mathf.Sin(angle) * radius;
+            lr.SetPosition(i, new Vector3(x, y, 0));
+        }
+        dalgonaLines.Add(lr);
+    }
+
+    private void CreateStarLine(int points, float outerRadius, float innerRadius, Vector3 center, float rotationOffsetDegrees = 0f)
+    {
+        GameObject segmentGO = Instantiate(dalgonaSegmentPrefab, dalgonaShapeContainer);
+        LineRenderer lr = segmentGO.GetComponent<LineRenderer>();
+        lr.useWorldSpace = true;
+
+        int totalVertices = points * 2;
+        lr.positionCount = totalVertices + 1;
+        lr.loop = true;
+
+        float angleStep = 360f / totalVertices;
+        float rotationOffsetRad = rotationOffsetDegrees * Mathf.Deg2Rad;
+
+        for (int i = 0; i <= totalVertices; i++)
+        {
+            float radius = (i % 2 == 0) ? outerRadius : innerRadius;
+            float currentAngle = rotationOffsetRad + (i * angleStep * Mathf.Deg2Rad);
+
+            float x = center.x + Mathf.Cos(currentAngle) * radius;
+            float y = center.y + Mathf.Sin(currentAngle) * radius;
+            lr.SetPosition(i, new Vector3(x, y, 0));
+        }
+        dalgonaLines.Add(lr);
+    }
+
+    private void GenerateShootingStar()
+    {
+        // --- Setup ---
+        float starSize = shapeSize / 1.5f;
+        float outerRadius = starSize / 2f;
+        float innerRadius = outerRadius * 0.5f;
+        Vector3 starCenter = new Vector3(-shapeSize / 2.5f, 0, 0);
+        float starRotationDegrees = 90f; // Point up
+
+        // --- 1. Draw the Star ---
+        CreateStarLine(5, outerRadius, innerRadius, starCenter, starRotationDegrees);
+
+        // --- 2. Calculate Tail Attachment Points ---
+        float rotationRad = starRotationDegrees * Mathf.Deg2Rad;
+        
+        // The tails emerge from the two "notches" on the right side of the point-up star.
+        // Top-right notch is at vertex index 9 (angle: 90 - 36 = 54 deg)
+        float upperTailStartAngle = rotationRad - (36f * Mathf.Deg2Rad);
+        Vector3 upperTailStart = starCenter + new Vector3(Mathf.Cos(upperTailStartAngle) * innerRadius, Mathf.Sin(upperTailStartAngle) * innerRadius, 0);
+
+        // Bottom-right notch is at vertex index 3 (angle: 90 - 108 = -18 deg)
+        float lowerTailStartAngle = rotationRad - (108f * Mathf.Deg2Rad);
+        Vector3 lowerTailStart = starCenter + new Vector3(Mathf.Cos(lowerTailStartAngle) * innerRadius, Mathf.Sin(lowerTailStartAngle) * innerRadius, 0);
+
+        // --- 3. Define the centerline for the shared edge ---
+        Vector3 midTailStart = (upperTailStart + lowerTailStart) / 2f;
+        Vector3 tailControlOffset = new Vector3(shapeSize * 0.4f, shapeSize * 0.1f, 0);
+        Vector3 tailEndOffset     = new Vector3(shapeSize * 0.9f, -shapeSize * 0.1f, 0);
+        Vector3 midTailControl = midTailStart + tailControlOffset;
+        Vector3 midTailEnd   = midTailStart + tailEndOffset;
+
+        // --- 4. Generate the three parallel curves (upper, middle, lower) ---
+        int tailSegments = 25;
+        float ribbonWidth = shapeSize / 8f; // This is the distance from the centerline to an outer edge.
+
+        List<Vector3> upperCurve = new List<Vector3>();
+        List<Vector3> middleCurve = new List<Vector3>();
+        List<Vector3> lowerCurve = new List<Vector3>();
+
+        for (int i = 0; i <= tailSegments; i++)
+        {
+            float t = (float)i / tailSegments;
+            Vector3 midPoint = CalculateQuadraticBezierPoint(t, midTailStart, midTailControl, midTailEnd);
+            middleCurve.Add(midPoint);
+
+            Vector3 derivative = 2 * (1 - t) * (midTailControl - midTailStart) + 2 * t * (midTailEnd - midTailControl);
+            Vector3 normal = Vector3.Cross(derivative, Vector3.forward).normalized;
+            
+            upperCurve.Add(midPoint + normal * ribbonWidth);
+            lowerCurve.Add(midPoint - normal * ribbonWidth);
+        }
+
+        // --- 5. Create the final shapes: one outline and one centerline ---
+        
+        // The centerline is the shared middle curve
+        CreateLine(middleCurve, false);
+
+        // The outline is a single closed loop made from the outer curves
+        List<Vector3> outlinePoints = new List<Vector3>();
+        outlinePoints.AddRange(upperCurve);
+        
+        // Add an end cap
+        Vector3 endDirection = (midTailEnd - midTailControl).normalized;
+        float totalWidth = ribbonWidth * 2f;
+        Vector3 vPoint = middleCurve[middleCurve.Count - 1] - endDirection * totalWidth * 0.75f;
+        outlinePoints.Add(vPoint);
+        
+        lowerCurve.Reverse();
+        outlinePoints.AddRange(lowerCurve);
+        
+        CreateLine(outlinePoints, true); // Create a closed loop for the outline
+    }
+    
+    private void CreateLine(List<Vector3> points, bool loop)
+    {
+        GameObject segmentGO = Instantiate(dalgonaSegmentPrefab, dalgonaShapeContainer);
+        LineRenderer lr = segmentGO.GetComponent<LineRenderer>();
+        lr.useWorldSpace = true;
+        lr.positionCount = points.Count;
+        lr.SetPositions(points.ToArray());
+        lr.loop = loop;
+        dalgonaLines.Add(lr);
+    }
+
+    private Vector3 CalculateQuadraticBezierPoint(float t, Vector3 p0, Vector3 p1, Vector3 p2)
+    {
+        // B(t) = (1-t)^2 * P0 + 2(1-t)t * P1 + t^2 * P2
+        float u = 1 - t;
+        float tt = t * t;
+        float uu = u * u;
+        Vector3 p = uu * p0;
+        p += 2 * u * t * p1;
+        p += tt * p2;
+        return p;
+    }
+
+    private void GenerateSpiral()
+    {
+        const float startRadiusFactor = 0.05f;
+        const float endRadiusFactor = 0.5f;
+        const int segments = 150;
+        const int turns = 5;
+
+        GameObject segmentGO = Instantiate(dalgonaSegmentPrefab, dalgonaShapeContainer);
+        LineRenderer lr = segmentGO.GetComponent<LineRenderer>();
+        lr.useWorldSpace = true;
+        lr.positionCount = segments;
+        lr.loop = false;
+
+        float totalAngle = turns * 360f;
+        float spiralStartRadius = shapeSize * startRadiusFactor;
+        float spiralEndRadius = shapeSize * endRadiusFactor;
+
+        for (int i = 0; i < segments; i++)
+        {
+            // t is the normalized progress of the spiral, from 0 to 1
+            float t = (float)i / (segments - 1);
+            float currentAngle = t * totalAngle * Mathf.Deg2Rad;
+            float currentRadius = Mathf.Lerp(spiralStartRadius, spiralEndRadius, t);
+
+            float x = Mathf.Cos(currentAngle) * currentRadius;
+            float y = Mathf.Sin(currentAngle) * currentRadius;
+            lr.SetPosition(i, new Vector3(x, y, 0));
+        }
+        dalgonaLines.Add(lr);
+    }
+
+    private void GenerateCustomShape()
+    {
+        if (customShapeProfile == null || customShapeProfile.points.Count < 2)
+        {
+            Debug.LogError("Custom Shape Profile is not assigned or has too few points to draw anything.");
+            return;
+        }
+
+        GameObject segmentGO = Instantiate(dalgonaSegmentPrefab, dalgonaShapeContainer);
+        LineRenderer lr = segmentGO.GetComponent<LineRenderer>();
+        lr.useWorldSpace = true;
+
+        lr.positionCount = customShapeProfile.points.Count;
+        lr.SetPositions(customShapeProfile.points.ToArray());
+        lr.loop = customShapeProfile.closeShape;
+
+        dalgonaLines.Add(lr);
+    }
+    
+    private void SierpinskiRecursive(Vector3 p1, Vector3 p2, Vector3 p3, int depth)
     {
         if (depth <= 0)
         {
-            AddLine(points, p1, p2);
-            AddLine(points, p2, p3);
-            AddLine(points, p3, p1);
-            points.Add(p1);
+            AddTriangle(p1, p2, p3);
             return;
         }
 
@@ -104,77 +399,205 @@ public class StrokePainter : MonoBehaviour
         Vector3 m23 = (p2 + p3) / 2;
         Vector3 m31 = (p3 + p1) / 2;
 
-        SierpinskiRecursive(points, p1, m12, m31, depth - 1);
-        SierpinskiRecursive(points, m31, m23, p3, depth - 1);
-        SierpinskiRecursive(points, m12, p2, m23, depth - 1);
+        SierpinskiRecursive(p1, m12, m31, depth - 1);
+        SierpinskiRecursive(p2, m23, m12, depth - 1);
+        SierpinskiRecursive(p3, m31, m23, depth - 1);
+    }
+    
+    private void AddTriangle(Vector3 p1, Vector3 p2, Vector3 p3)
+    {
+        GameObject segmentGO = Instantiate(dalgonaSegmentPrefab, dalgonaShapeContainer);
+        LineRenderer lr = segmentGO.GetComponent<LineRenderer>();
+        lr.useWorldSpace = true; // Ensure the line renderer uses world space for its points.
+        
+        List<Vector3> points = new List<Vector3>();
+        AddLine(points, p1, p2);
+        points.RemoveAt(points.Count - 1); // Remove duplicate point before next segment
+        AddLine(points, p2, p3);
+        points.RemoveAt(points.Count - 1);
+        AddLine(points, p3, p1);
+
+        lr.positionCount = points.Count;
+        lr.SetPositions(points.ToArray());
+        dalgonaLines.Add(lr);
     }
 
     private void AddLine(List<Vector3> points, Vector3 start, Vector3 end)
     {
+        const int subdivisions = 3;
         points.Add(start);
-        for (int i = 1; i <= edgeSubdivisions; i++)
+        for (int i = 1; i <= subdivisions; i++)
         {
-            float t = (float)i / (edgeSubdivisions + 1);
+            float t = (float)i / (subdivisions + 1);
             points.Add(Vector3.Lerp(start, end, t));
         }
+        points.Add(end);
     }
-
+    
     [ContextMenu("Clear Shape")]
     private void ClearShape()
     {
-        if (dalgonaShape == null) return;
-        dalgonaShape.positionCount = 0;
-        ResetCompletionTracking();
-        SetupToleranceVisualizer();
+        if (Application.isPlaying)
+        {
+            foreach (Transform child in dalgonaShapeContainer) Destroy(child.gameObject);
+            foreach (Transform child in toleranceVisualizerContainer) Destroy(child.gameObject);
+        }
+        else
+        {
+            while (dalgonaShapeContainer.childCount > 0) DestroyImmediate(dalgonaShapeContainer.GetChild(0).gameObject);
+            while (toleranceVisualizerContainer.childCount > 0) DestroyImmediate(toleranceVisualizerContainer.GetChild(0).gameObject);
+        }
+        dalgonaLines.Clear();
+        toleranceLines.Clear();
     }
     
-    // --- Core Gameplay & Helper Logic ---
-
-    private void ResetCompletionTracking()
+    private void InitializeAfterGeneration()
     {
+        completionPointTrackers = new List<bool[]>();
+        totalPointsInShape = 0;
         coveredPointsCount = 0;
-        if (dalgonaShape != null && dalgonaShape.positionCount > 0)
-            shapePointsCovered = new bool[dalgonaShape.positionCount];
-        else
-            shapePointsCovered = new bool[0];
+        
+        foreach (LineRenderer lr in dalgonaLines)
+        {
+            completionPointTrackers.Add(new bool[lr.positionCount]);
+            totalPointsInShape += lr.positionCount;
+        }
+
+        SetupToleranceVisualizers();
     }
-    private void StartDrawing()
-    {
-        Vector3 mousePos = GetMouseWorldPosition();
-        GameObject strokeGO = Instantiate(strokePrefab, Vector3.zero, Quaternion.identity, this.transform);
-        currentStrokeRenderer = strokeGO.GetComponent<LineRenderer>();
-        currentStrokeRenderer.positionCount = 0;
-        if (dalgonaShape != null)
-            currentStrokeRenderer.sortingOrder = dalgonaShape.sortingOrder + 1;
-        AddPointToLine(mousePos);
-        if (!IsPointOnPath(mousePos)) { TriggerGameOver(); return; }
-        else { CheckShapeCoverage(mousePos); }
-        isDrawing = true;
-    }
+
+    // --- Core Game Logic ---
+    void Update() { if (isGameOver || isGameWon) return; if (Input.GetMouseButtonDown(0)) StartDrawing(); if (Input.GetMouseButton(0) && isDrawing) ContinueDrawing(); if (Input.GetMouseButtonUp(0) && isDrawing) StopDrawing(); }
+    private void StartDrawing() { Vector3 mousePos = GetMouseWorldPosition(); GameObject strokeGO = Instantiate(strokePrefab, Vector3.zero, Quaternion.identity, this.transform); currentStrokeRenderer = strokeGO.GetComponent<LineRenderer>(); currentStrokeRenderer.positionCount = 0; if (dalgonaLines.Count > 0) currentStrokeRenderer.sortingOrder = dalgonaLines[0].sortingOrder + 1; AddPointToLine(mousePos); if (!IsPointOnPath(mousePos)) { TriggerGameOver(); return; } else { CheckShapeCoverage(mousePos); } isDrawing = true; }
     private void ContinueDrawing()
     {
         Vector3 mousePos = GetMouseWorldPosition();
         AddPointToLine(mousePos);
-        if (!IsPointOnPath(mousePos)) { TriggerGameOver(); }
-        else { CheckShapeCoverage(mousePos); }
+        if (!IsPointOnPath(mousePos))
+        {
+            TriggerGameOver();
+        }
+        else
+        {
+            CheckShapeCoverage(mousePos);
+            // DEBUG: Log current progress
+            float currentCoverage = (totalPointsInShape > 0) ? (float)coveredPointsCount / totalPointsInShape : 0f;
+            Debug.Log($"진행률 (Progress): {currentCoverage * 100:F1}% ({coveredPointsCount} / {totalPointsInShape} points)");
+        }
     }
-    private void StopDrawing()
-    {
-        isDrawing = false;
-        currentStrokeRenderer = null;
-        float currentCoverage = 0f;
-        if (dalgonaShape.positionCount > 0)
-            currentCoverage = (float)coveredPointsCount / dalgonaShape.positionCount;
-        Debug.Log($"현재 총 완성도 (Total Coverage): {currentCoverage * 100:F1}%");
-        if (currentCoverage >= completionPercentage)
-            TriggerGameWon();
-    }
+    private void StopDrawing() { isDrawing = false; currentStrokeRenderer = null; float currentCoverage = 0f; if (totalPointsInShape > 0) currentCoverage = (float)coveredPointsCount / totalPointsInShape; Debug.Log($"현재 총 완성도 (Total Coverage): {currentCoverage * 100:F1}%"); if (currentCoverage >= completionPercentage) TriggerGameWon(); }
     private void TriggerGameOver() { Debug.LogError("실패! 경로를 벗어났습니다. (Game Over! You strayed from the path.)"); isGameOver = true; isDrawing = false; if (currentStrokeRenderer != null && failedMaterial != null) currentStrokeRenderer.material = failedMaterial; }
     private void TriggerGameWon() { Debug.Log("성공! 모양을 완성했습니다! (Success! You completed the shape!)"); isGameWon = true; this.enabled = false; }
     private void AddPointToLine(Vector3 position) { if (currentStrokeRenderer == null) return; if (currentStrokeRenderer.positionCount > 0 && Vector3.Distance(currentStrokeRenderer.GetPosition(currentStrokeRenderer.positionCount - 1), position) < 0.01f) return; currentStrokeRenderer.positionCount++; currentStrokeRenderer.SetPosition(currentStrokeRenderer.positionCount - 1, position); }
-    private void CheckShapeCoverage(Vector3 drawnPoint) { Vector2 drawnPoint2D = new Vector2(drawnPoint.x, drawnPoint.y); for (int i = 0; i < dalgonaShape.positionCount; i++) { if (!shapePointsCovered[i]) { Vector3 shapePoint3D = dalgonaShape.useWorldSpace ? dalgonaShape.GetPosition(i) : dalgonaShape.transform.TransformPoint(dalgonaShape.GetPosition(i)); Vector2 shapePoint2D = new Vector2(shapePoint3D.x, shapePoint3D.y); if (Vector2.Distance(drawnPoint2D, shapePoint2D) <= tolerance) { shapePointsCovered[i] = true; coveredPointsCount++; } } } }
     private Vector3 GetMouseWorldPosition() { Vector3 mousePos = Input.mousePosition; mousePos.z = mainCamera.nearClipPlane + 10; return mainCamera.ScreenToWorldPoint(mousePos); }
-    private bool IsPointOnPath(Vector3 point) { float minDistance = float.MaxValue; Vector2 point2D = new Vector2(point.x, point.y); for (int i = 0; i < dalgonaShape.positionCount - 1; i++) { Vector3 p1_3D = dalgonaShape.useWorldSpace ? dalgonaShape.GetPosition(i) : dalgonaShape.transform.TransformPoint(dalgonaShape.GetPosition(i)); Vector3 p2_3D = dalgonaShape.useWorldSpace ? dalgonaShape.GetPosition(i + 1) : dalgonaShape.transform.TransformPoint(dalgonaShape.GetPosition(i + 1)); Vector2 p1 = new Vector2(p1_3D.x, p1_3D.y); Vector2 p2 = new Vector2(p2_3D.x, p2_3D.y); float distance = DistancePointToLineSegment(point2D, p1, p2); if (distance < minDistance) minDistance = distance; } if (dalgonaShape.loop && dalgonaShape.positionCount > 1) { Vector3 p_last_3D = dalgonaShape.useWorldSpace ? dalgonaShape.GetPosition(dalgonaShape.positionCount - 1) : dalgonaShape.transform.TransformPoint(dalgonaShape.GetPosition(dalgonaShape.positionCount - 1)); Vector3 p_first_3D = dalgonaShape.useWorldSpace ? dalgonaShape.GetPosition(0) : dalgonaShape.transform.TransformPoint(dalgonaShape.GetPosition(0)); Vector2 p_last = new Vector2(p_last_3D.x, p_last_3D.y); Vector2 p_first = new Vector2(p_first_3D.x, p_first_3D.y); float distance = DistancePointToLineSegment(point2D, p_last, p_first); if (distance < minDistance) minDistance = distance; } return minDistance <= tolerance; }
+
+    private void CheckShapeCoverage(Vector3 drawnPoint)
+    {
+        Vector2 drawnPoint2D = new Vector2(drawnPoint.x, drawnPoint.y);
+        coveredPointsCount = 0; // Recalculate from scratch each time
+
+        for (int i = 0; i < dalgonaLines.Count; i++)
+        {
+            LineRenderer line = dalgonaLines[i];
+            bool[] tracker = completionPointTrackers[i];
+            for (int j = 0; j < line.positionCount; j++)
+            {
+                if (!tracker[j])
+                {
+                    Vector3 shapePoint3D = line.useWorldSpace ? line.GetPosition(j) : line.transform.TransformPoint(line.GetPosition(j));
+                    if (Vector2.Distance(drawnPoint2D, new Vector2(shapePoint3D.x, shapePoint3D.y)) <= tolerance)
+                    {
+                        tracker[j] = true;
+                    }
+                }
+                if (tracker[j]) coveredPointsCount++;
+            }
+        }
+    }
+
+    private bool IsPointOnPath(Vector3 point)
+    {
+        if (dalgonaLines.Count == 0)
+        {
+            Debug.LogWarning("[DEBUG] dalgonaLines가 비어있습니다. 에디터에서 [Generate Sierpinski Triangle]을 실행했는지 또는 게임 시작 시 모양이 생성되는지 확인해주세요.");
+            return false;
+        }
+
+        float minDistanceOverall = float.MaxValue;
+        foreach (var line in dalgonaLines)
+        {
+            // We find the minimum distance from the point to any of the line segments.
+            for (int i = 0; i < line.positionCount - 1; i++)
+            {
+                Vector3 p1_3D = line.useWorldSpace ? line.GetPosition(i) : line.transform.TransformPoint(line.GetPosition(i));
+                Vector3 p2_3D = line.useWorldSpace ? line.GetPosition(i + 1) : line.transform.TransformPoint(line.GetPosition(i + 1));
+                float distance = DistancePointToLineSegment(new Vector2(point.x, point.y), new Vector2(p1_3D.x, p1_3D.y), new Vector2(p2_3D.x, p2_3D.y));
+                if (distance < minDistanceOverall)
+                {
+                    minDistanceOverall = distance;
+                }
+            }
+        }
+
+        bool isOnPath = minDistanceOverall <= tolerance;
+
+        // Detailed log to show exactly what's happening.
+        if (!isOnPath)
+        {
+            Debug.LogError($"[DEBUG] 실패! 경로를 벗어났습니다. 마우스 위치: {point}, 가장 가까운 선분과의 거리: {minDistanceOverall}, 허용 오차: {tolerance}");
+        }
+        else
+        {
+            Debug.Log($"[DEBUG] 경로 위에 있습니다. 마우스 위치: {point}, 가장 가까운 선분과의 거리: {minDistanceOverall}, 허용 오차: {tolerance}");
+        }
+
+        return isOnPath;
+    }
+
+    private bool IsPointOnSinglePath(Vector3 point, LineRenderer line)
+    {
+        float minDistance = float.MaxValue;
+        Vector2 point2D = new Vector2(point.x, point.y);
+        for (int i = 0; i < line.positionCount - 1; i++)
+        {
+            Vector3 p1_3D = line.useWorldSpace ? line.GetPosition(i) : line.transform.TransformPoint(line.GetPosition(i));
+            Vector3 p2_3D = line.useWorldSpace ? line.GetPosition(i + 1) : line.transform.TransformPoint(line.GetPosition(i + 1));
+            float distance = DistancePointToLineSegment(point2D, new Vector2(p1_3D.x, p1_3D.y), new Vector2(p2_3D.x, p2_3D.y));
+            if (distance < minDistance) minDistance = distance;
+        }
+        return minDistance <= tolerance;
+    }
+
     public static float DistancePointToLineSegment(Vector2 point, Vector2 p1, Vector2 p2) { if (p1 == p2) return Vector2.Distance(point, p1); Vector2 lineDirection = p2 - p1; float lineLengthSqr = lineDirection.sqrMagnitude; Vector2 pointVector = point - p1; float t = Mathf.Clamp01(Vector2.Dot(pointVector, lineDirection) / lineLengthSqr); Vector2 projection = p1 + t * lineDirection; return Vector2.Distance(point, projection); }
-    private void SetupToleranceVisualizer() { if (toleranceVisualizer == null) return; toleranceVisualizer.useWorldSpace = dalgonaShape.useWorldSpace; if (!toleranceVisualizer.useWorldSpace) { toleranceVisualizer.transform.position = dalgonaShape.transform.position; toleranceVisualizer.transform.rotation = dalgonaShape.transform.rotation; toleranceVisualizer.transform.localScale = dalgonaShape.transform.localScale; } Vector3[] points = new Vector3[dalgonaShape.positionCount]; dalgonaShape.GetPositions(points); toleranceVisualizer.positionCount = dalgonaShape.positionCount; toleranceVisualizer.SetPositions(points); toleranceVisualizer.startWidth = tolerance * 2f; toleranceVisualizer.endWidth = tolerance * 2f; toleranceVisualizer.loop = dalgonaShape.loop; toleranceVisualizer.sortingOrder = dalgonaShape.sortingOrder - 1; }
+    
+    private void SetupToleranceVisualizers()
+    {
+        ClearToleranceVisualizers();
+        foreach (var dalgonaLine in dalgonaLines)
+        {
+            GameObject visualizerGO = Instantiate(dalgonaSegmentPrefab, toleranceVisualizerContainer);
+            LineRenderer visualizerLR = visualizerGO.GetComponent<LineRenderer>();
+            visualizerLR.useWorldSpace = dalgonaLine.useWorldSpace;
+            if(!visualizerLR.useWorldSpace)
+            {
+                 visualizerGO.transform.SetParent(dalgonaLine.transform, false);
+            }
+            Vector3[] points = new Vector3[dalgonaLine.positionCount];
+            dalgonaLine.GetPositions(points);
+            visualizerLR.positionCount = dalgonaLine.positionCount;
+            visualizerLR.SetPositions(points);
+            visualizerLR.startWidth = tolerance * 2f;
+            visualizerLR.endWidth = tolerance * 2f;
+            visualizerLR.loop = dalgonaLine.loop;
+            visualizerLR.sortingOrder = dalgonaLine.sortingOrder - 1;
+            toleranceLines.Add(visualizerLR);
+        }
+    }
+
+    private void ClearToleranceVisualizers()
+    {
+        if (Application.isPlaying) { foreach (Transform child in toleranceVisualizerContainer) Destroy(child.gameObject); }
+        else { while (toleranceVisualizerContainer.childCount > 0) DestroyImmediate(toleranceVisualizerContainer.GetChild(0).gameObject); }
+        toleranceLines.Clear();
+    }
 }
