@@ -18,18 +18,20 @@ public class InGameController : MonoBehaviour
     private ISubGameController _currentSubGame;
 
     private bool _isInititalized = false;
+    private bool _isGameEnded = false;
 
 
     private ResponsePacketData.SubGameEnded _subGameEndedData;
 
     private ResponsePacketData.DalgonaGameStarted _dalgonaGameData;
     private ResponsePacketData.TugOfWarGameStarted _tugOfWarGameData;
+    private ResponsePacketData.GameEnded _gameEndedData;
 
 
 
     public void ManualStart(ResponsePacketData.StartGame startGameData)
     {
-
+        _isGameEnded = false;
         _myIndex = startGameData.myIndex;
         _playerNames = startGameData.names;
         _playerIsAlive = new string[_playerNames.Length];
@@ -45,7 +47,7 @@ public class InGameController : MonoBehaviour
 
     private void ManualUpdate()
     {
-        if (!_isInititalized)
+        if (!_isInititalized || _isGameEnded)
         {
             return;
         }
@@ -94,8 +96,17 @@ public class InGameController : MonoBehaviour
     {
         if (isSuccess)
         {
-            
+            _gameEndedData = data;
+            SceneManager.sceneLoaded += OnResultSceneLoaded;
+            SceneManager.LoadScene("ResultScene");
         }
+    }
+
+    private void OnResultSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        SceneManager.sceneLoaded -= OnResultSceneLoaded;
+        ResultController resultController = FindObjectOfType<ResultController>();
+        resultController.ManualStart(this, _gameEndedData);
     }
 
     public void OnResponseDalgonaGameStarted(bool isSuccess, ResponsePacketData.DalgonaGameStarted data)
@@ -141,6 +152,11 @@ public class InGameController : MonoBehaviour
     protected void Update()
     {
         ManualUpdate();
+    }
+
+    public void DestroyInGameController()
+    {
+        Destroy(gameObject);
     }
 
     

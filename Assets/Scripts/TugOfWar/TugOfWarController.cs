@@ -145,7 +145,9 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
         }
 
         HandleInput();
-        _deltaPressCountMovingAverage = Mathf.Lerp(_deltaPressCountMovingAverage, _deltaPressCount, 0.1f); // TODO: Considering DeltaTime
+        float smoothingSpeed = 1.0f; // 초당 변화 속도 (값이 클수록 빠르게 변화)
+        float deltaTimeFactor = Mathf.Clamp01(smoothingSpeed * Time.deltaTime);
+        _deltaPressCountMovingAverage = Mathf.Lerp(_deltaPressCountMovingAverage, _deltaPressCount, deltaTimeFactor);
 
         UpdateViewUsingDeltaPressCount();
 
@@ -155,7 +157,7 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
     {
         float clampedDeltaMovingAverage = Mathf.Clamp(_deltaPressCountMovingAverage / 50.0f, -1.0f, 1.0f);
 
-        _ropeAndPlayer.transform.localPosition = new Vector3(clampedDeltaMovingAverage * 100.0f, 0.0f, 0.0f);
+        _ropeAndPlayer.transform.localPosition = new Vector3(clampedDeltaMovingAverage * (- 100.0f), 0.0f, 0.0f);
 
         _redTeamSlider.fillAmount = Mathf.Clamp01(0.5f + (clampedDeltaMovingAverage / 2.0f));
         _blueTeamSlider.fillAmount = Mathf.Clamp01(0.5f - (clampedDeltaMovingAverage / 2.0f));
@@ -246,14 +248,14 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
         float progress = 0.0f;
         float duration = 1.3f;
 
-        int playerCount = isLeftWin ? _leftTeamPlayerComponents.Count : _rightTeamPlayerComponents.Count;
+        int playerCount = isLeftWin ? _rightTeamPlayerComponents.Count : _leftTeamPlayerComponents.Count;
 
         Vector3[] playerPositionOrigin = new Vector3[playerCount];
         Vector3[] playerPositionDestination = new Vector3[playerCount];
 
         for (int i = 0; i < playerCount; i++)
         {
-            playerPositionOrigin[i] = isLeftWin ? _leftTeamPlayerComponents[i].transform.localPosition : _rightTeamPlayerComponents[i].transform.localPosition;
+            playerPositionOrigin[i] = isLeftWin ? _rightTeamPlayerComponents[i].transform.localPosition : _leftTeamPlayerComponents[i].transform.localPosition;
             playerPositionDestination[i] = new Vector3(Random.Range(400f, 1400f), Random.Range(150f, 500f), 0.0f);
         }
 
@@ -264,8 +266,20 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
 
             for (int i = 0; i < playerCount; i++)
             {
-                _leftTeamPlayerComponents[i].transform.localPosition = Vector3.Lerp(playerPositionOrigin[i], playerPositionDestination[i], progress);
+
+                if (isLeftWin)
+                {
+                    _rightTeamPlayerComponents[i].transform.localPosition = Vector3.Lerp(playerPositionOrigin[i], playerPositionDestination[i], progress);
+                }
+                else
+                {
+                    _leftTeamPlayerComponents[i].transform.localPosition = Vector3.Lerp(playerPositionOrigin[i], playerPositionDestination[i], progress);
+                }
+
+                
             }
+
+            _ropeTransform.transform.localPosition = new Vector3((isLeftWin ? -1.0f : 1.0f) * progress * 300.0f, 0.0f, 0.0f);
 
             yield return null;
         }
