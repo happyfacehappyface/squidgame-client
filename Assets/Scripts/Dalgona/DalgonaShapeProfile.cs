@@ -1,12 +1,16 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+[System.Serializable]
+public class DalgonaPath
+{
+    public string name = "New Path";
+    public bool closeShape = true;
+    public List<Vector3> points = new List<Vector3>();
+}
+
 [CreateAssetMenu(fileName = "NewDalgonaShape", menuName = "Dalgona/Dalgona Shape Profile", order = 1)]
 public class DalgonaShapeProfile : ScriptableObject
 {
-    [Tooltip("A list of points that define the custom shape. The points will be connected in order.")]
-    public List<Vector3> points = new List<Vector3>();
-
-    [Tooltip("Whether the shape should be closed (i.e., connect the last point to the first).")]
-    public bool closeShape = true;
+    public List<DalgonaPath> paths = new List<DalgonaPath>();
 }

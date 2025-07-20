@@ -37,8 +37,7 @@ public class StrokePainter : MonoBehaviour
     [Range(1, 3)]
     public int difficultyLevel = 1;
 
-    [Header("Custom Shape Settings")]
-    [Tooltip("A profile asset containing the points for a custom shape.")]
+    [Tooltip("A profile asset containing the points for a custom shape. Required for 'CustomFromProfile' shape type.")]
     public DalgonaShapeProfile customShapeProfile;
 
     [Header("Game Rules")]
@@ -76,27 +75,10 @@ public class StrokePainter : MonoBehaviour
             return;
         }
 
-        // If no shape is present in the container, generate it at runtime.
-        if (dalgonaShapeContainer.childCount == 0)
-        {
-            Debug.Log("Dalgona shape not found, generating a new one at runtime.");
-            GenerateShape();
-        }
-        // If a shape was pre-generated in the editor, we need to find the LineRenderers and initialize the game state.
-        else
-        {
-            Debug.Log("Pre-generated Dalgona shape found, initializing from scene.");
-            dalgonaLines.Clear();
-            foreach (Transform child in dalgonaShapeContainer)
-            {
-                var lr = child.GetComponent<LineRenderer>();
-                if (lr != null)
-                {
-                    dalgonaLines.Add(lr);
-                }
-            }
-            InitializeAfterGeneration();
-        }
+        // Always clear any pre-existing shapes and generate the currently selected one at runtime.
+        // This ensures the game view is always in sync with the inspector settings.
+        ClearShape();
+        GenerateShape();
     }
 
     [ContextMenu("Generate Shape")]
@@ -191,10 +173,43 @@ public class StrokePainter : MonoBehaviour
                 GenerateShootingStar();
                 break;
             case 3:
-                // 12 points, pointed up
-                CreateStarLine(12, outerRadius, outerRadius * 0.7f, Vector3.zero, 90f);
+                // Starbucks-inspired logo
+                GenerateStarbucksLogo();
                 break;
         }
+    }
+
+    private void GenerateStarbucksLogo()
+    {
+        float outerRadius = shapeSize / 2f;
+
+        // 1. Outer Circle
+        CreateCircleLine(Vector3.zero, outerRadius, 60);
+
+        // 2. Center Star
+        float starRadius = shapeSize * 0.12f;
+        Vector3 starCenter = new Vector3(0, shapeSize * 0.25f, 0);
+        CreateStarLine(5, starRadius, starRadius * 0.5f, starCenter, 90f);
+
+        // 3. The two iconic tail fins
+        // Define the shape for the right fin...
+        List<Vector3> rightFinPoints = new List<Vector3>
+        {
+            new Vector3(shapeSize * 0.15f, -shapeSize * 0.15f, 0),
+            new Vector3(shapeSize * 0.4f, -shapeSize * 0.1f, 0),
+            new Vector3(shapeSize * 0.35f, -shapeSize * 0.25f, 0),
+            new Vector3(shapeSize * 0.45f, -shapeSize * 0.3f, 0),
+            new Vector3(shapeSize * 0.2f, -shapeSize * 0.3f, 0)
+        };
+        CreateLine(rightFinPoints, true);
+
+        // ...and mirror it for the left fin.
+        List<Vector3> leftFinPoints = new List<Vector3>();
+        foreach (var point in rightFinPoints)
+        {
+            leftFinPoints.Add(new Vector3(-point.x, point.y, point.z));
+        }
+        CreateLine(leftFinPoints, true);
     }
 
     private void CreateCircleLine(Vector3 center, float radius, int segments)
@@ -215,6 +230,16 @@ public class StrokePainter : MonoBehaviour
             lr.SetPosition(i, new Vector3(x, y, 0));
         }
         dalgonaLines.Add(lr);
+    }
+
+    private void CreateBezierCurve(Vector3 p0, Vector3 p1, Vector3 p2, int segments)
+    {
+        List<Vector3> points = new List<Vector3>();
+        for (int i = 0; i <= segments; i++)
+        {
+            points.Add(CalculateQuadraticBezierPoint((float)i/segments, p0, p1, p2));
+        }
+        CreateLine(points, false);
     }
 
     private void CreateStarLine(int points, float outerRadius, float innerRadius, Vector3 center, float rotationOffsetDegrees = 0f)
@@ -422,21 +447,19 @@ public class StrokePainter : MonoBehaviour
 
     private void GenerateCustomShape()
     {
-        if (customShapeProfile == null || customShapeProfile.points.Count < 2)
+        if (customShapeProfile == null || customShapeProfile.paths.Count == 0)
         {
-            Debug.LogError("Custom Shape Profile is not assigned or has too few points to draw anything.");
+            Debug.LogError("Custom Shape Profile is not assigned or has no paths to draw.");
             return;
         }
 
-        GameObject segmentGO = Instantiate(dalgonaSegmentPrefab, dalgonaShapeContainer);
-        LineRenderer lr = segmentGO.GetComponent<LineRenderer>();
-        lr.useWorldSpace = true;
-
-        lr.positionCount = customShapeProfile.points.Count;
-        lr.SetPositions(customShapeProfile.points.ToArray());
-        lr.loop = customShapeProfile.closeShape;
-
-        dalgonaLines.Add(lr);
+        foreach (var path in customShapeProfile.paths)
+        {
+            if (path.points.Count >= 2)
+            {
+                CreateLine(path.points, path.closeShape);
+            }
+        }
     }
     
     private void SierpinskiRecursive(Vector3 p1, Vector3 p2, Vector3 p3, int depth)
