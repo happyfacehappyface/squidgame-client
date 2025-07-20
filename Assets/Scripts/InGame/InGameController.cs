@@ -5,8 +5,8 @@ using UnityEngine.SceneManagement;
 
 public class InGameController : MonoBehaviour
 {
-
     private int _myIndex;
+    public int MyIndex => _myIndex;
     private string[] _playerNames;
     public string[] PlayerNames => _playerNames;
     private string[] _playerIsAlive;
@@ -23,6 +23,7 @@ public class InGameController : MonoBehaviour
     private ResponsePacketData.SubGameEnded _subGameEndedData;
 
     private ResponsePacketData.DalgonaGameStarted _dalgonaGameData;
+    private ResponsePacketData.TugOfWarGameStarted _tugOfWarGameData;
 
 
 
@@ -66,7 +67,7 @@ public class InGameController : MonoBehaviour
     {
         if (isSuccess)
         {
-            _currentSubGame.OnSubGameStarted(this);
+            _currentSubGame.OnSubGameStarted();
         }
     }
 
@@ -85,8 +86,16 @@ public class InGameController : MonoBehaviour
         SceneManager.sceneLoaded -= OnWaitingSceneLoaded;
         WaitingController waitingController = FindObjectOfType<WaitingController>();
         _currentSubGame = waitingController;
-        waitingController.OnSubGameStarted(this);
+        waitingController.ManualStart(this);
         waitingController.OnShowSubGameResult(_subGameEndedData);
+    }
+
+    public void OnResponseGameEnded(bool isSuccess, ResponsePacketData.GameEnded data)
+    {
+        if (isSuccess)
+        {
+            
+        }
     }
 
     public void OnResponseDalgonaGameStarted(bool isSuccess, ResponsePacketData.DalgonaGameStarted data)
@@ -100,8 +109,6 @@ public class InGameController : MonoBehaviour
         }
     }
 
-    
-
 
     private void OnDalgonaSceneLoaded(Scene scene, LoadSceneMode mode)
     {
@@ -109,6 +116,25 @@ public class InGameController : MonoBehaviour
         DalgonaController dalgonaController = FindObjectOfType<DalgonaController>();
         _currentSubGame = dalgonaController;
         dalgonaController.ManualStart(_dalgonaGameData);
+    }
+
+    public void OnResponseTugOfWarGameStarted(bool isSuccess, ResponsePacketData.TugOfWarGameStarted data)
+    {
+        if (isSuccess)
+        {
+            _tugOfWarGameData = data;
+
+            SceneManager.sceneLoaded += OnTugOfWarSceneLoaded;
+            SceneManager.LoadScene("TugOfWarScene");
+        }
+    }
+
+    private void OnTugOfWarSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        SceneManager.sceneLoaded -= OnTugOfWarSceneLoaded;
+        TugOfWarController tugOfWarController = FindObjectOfType<TugOfWarController>();
+        _currentSubGame = tugOfWarController;
+        tugOfWarController.ManualStart(this, _tugOfWarGameData);
     }
 
 
@@ -124,7 +150,7 @@ public class InGameController : MonoBehaviour
 public interface ISubGameController
 {
 
-    public abstract void OnSubGameStarted(InGameController inGameController);
+    public abstract void OnSubGameStarted();
     public abstract void ManualUpdate();
 }
 

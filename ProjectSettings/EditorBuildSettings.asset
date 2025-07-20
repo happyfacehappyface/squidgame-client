@@ -15,6 +15,6 @@ EditorBuildSettings:
     path: Assets/Scenes/DalgonaScene.unity
     guid: 798f2f1d78cfc764bbe4f9498023086a
   - enabled: 1
-    path: Assets/Scenes/TogOfWarScene.unity
+    path: Assets/Scenes/TugOfWarScene.unity
     guid: 3f8972fdfe76c4f49a06db0daa8f7408
   m_configObjects: {}

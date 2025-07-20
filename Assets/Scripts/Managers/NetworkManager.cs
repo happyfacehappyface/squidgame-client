@@ -203,6 +203,13 @@ public class NetworkManager : MonoBehaviour
         },
 
         {
+            typeof(ResponsePacketData.GameEnded),
+            (isSuccess, data) => {
+                FindObjectOfType<InGameController>()?.OnResponseGameEnded(isSuccess, (ResponsePacketData.GameEnded)data);
+            }
+        },
+
+        {
             typeof(ResponsePacketData.DalgonaGameStarted),
             (isSuccess, data) => {
                 FindObjectOfType<InGameController>()?.OnResponseDalgonaGameStarted(isSuccess, (ResponsePacketData.DalgonaGameStarted)data);
@@ -213,6 +220,28 @@ public class NetworkManager : MonoBehaviour
             typeof(ResponsePacketData.DalgonaGameResult),
             (isSuccess, data) => {
                 FindObjectOfType<DalgonaController>()?.OnResponseDalgonaGameResult(isSuccess, (ResponsePacketData.DalgonaGameResult)data);
+            }
+        },
+
+
+        {
+            typeof(ResponsePacketData.TugOfWarGameStarted),
+            (isSuccess, data) => {
+                FindObjectOfType<InGameController>()?.OnResponseTugOfWarGameStarted(isSuccess, (ResponsePacketData.TugOfWarGameStarted)data);
+            }
+        },
+
+        {
+            typeof(ResponsePacketData.TugOfWarGamePressCount),
+            (isSuccess, data) => {
+                FindObjectOfType<TugOfWarController>()?.OnResponseTugOfWarGamePressCount(isSuccess, (ResponsePacketData.TugOfWarGamePressCount)data);
+            }
+        },
+
+        {
+            typeof(ResponsePacketData.TugOfWarGameResult),
+            (isSuccess, data) => {
+                FindObjectOfType<TugOfWarController>()?.OnResponseTugOfWarGameResult(isSuccess, (ResponsePacketData.TugOfWarGameResult)data);
             }
         },
 
@@ -231,6 +260,8 @@ public class NetworkManager : MonoBehaviour
 
         { 2001, typeof(RequestPacketData.ReadySubGame) },
         { 2102, typeof(RequestPacketData.DalgonaGameResult) },
+
+        { 2202, typeof(RequestPacketData.TugOfWarGamePressCount) },
     };
 
     private static readonly Dictionary<int, Type> _responseSignalToType = new()
@@ -244,9 +275,14 @@ public class NetworkManager : MonoBehaviour
 
         { 2001, typeof(ResponsePacketData.ReadySubGame) },
         { 2002, typeof(ResponsePacketData.SubGameEnded) },
+        { 2003, typeof(ResponsePacketData.GameEnded) },
 
         { 2101, typeof(ResponsePacketData.DalgonaGameStarted) },
         { 2102, typeof(ResponsePacketData.DalgonaGameResult) },
+
+        { 2201, typeof(ResponsePacketData.TugOfWarGameStarted) },
+        { 2202, typeof(ResponsePacketData.TugOfWarGamePressCount) },
+        { 2203, typeof(ResponsePacketData.TugOfWarGameResult) },
     };
 
     public static Type GetRequestTypeFromSignal(int signal)
@@ -381,6 +417,7 @@ public abstract record RequestPacketData
 
     public sealed record DalgonaGameResult(bool isSuccess) : RequestPacketData;
     
+    public sealed record TugOfWarGamePressCount(int pressCount) : RequestPacketData;
 }
 
 public abstract record ResponsePacketData
@@ -395,11 +432,17 @@ public abstract record ResponsePacketData
 
     public sealed record ReadySubGame() : ResponsePacketData;
     public sealed record SubGameEnded(int[] survivePlayerIndices) : ResponsePacketData;
+    public sealed record GameEnded(int winnerPlayerIndex) : ResponsePacketData;
 
 
     public sealed record DalgonaGameStarted(int timeLimitMs) : ResponsePacketData;
 
     public sealed record DalgonaGameResult(int playerIndex, bool isSuccess) : ResponsePacketData;
+
+    public sealed record TugOfWarGameStarted(int timeLimitMs, int[] leftTeamPlayerIndex, int[] rightTeamPlayerIndex, int[] unearnedWinPlayerIndex) : ResponsePacketData;
+
+    public sealed record TugOfWarGamePressCount(int deltaPressCount) : ResponsePacketData;
+    public sealed record TugOfWarGameResult(int deltaPressCount, bool isLeftWin) : ResponsePacketData;
 
 }
 

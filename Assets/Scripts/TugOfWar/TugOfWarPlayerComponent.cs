@@ -4,31 +4,35 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class TogOfWarPlayerComponent : MonoBehaviour
+public class TugOfWarPlayerComponent : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI _nameText;
-    [SerializeField] private TextMeshProUGUI _numberText;
     [SerializeField] private GameObject _isMeIndicator;
     [SerializeField] private Animator _animator;
 
-    [SerializeField] private Image _bodyColor;
+    [SerializeField] private PlayerComponent _playerComponent;
 
 
-    private void ManualStart(int playerIndex, string playerName, bool isMe)
+
+    public void ManualStart(int playerIndex, string playerName, bool isMe)
     {
         _isMeIndicator.SetActive(isMe);
         _nameText.text = playerName;
-        _bodyColor.color = AssetManager.Instance.GetBodyColorFromPlayerIndex(playerIndex);
-        _numberText.text = (playerIndex + 1).ToString();
+        _playerComponent.ManualStart(playerIndex);
     }
 
-    private void OnCountDownStart()
+    public void OnCountDownStart()
     {
         _animator.SetTrigger("Shake");
     }
 
-    private void OnLose()
+    public void OnLose()
     {
         _animator.SetTrigger("Flying");
+    }
+
+    public void OnWin()
+    {
+        _animator.SetTrigger("Idle");
     }
 }
