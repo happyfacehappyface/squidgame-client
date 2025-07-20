@@ -196,9 +196,23 @@ public class NetworkManager : MonoBehaviour
         },
 
         {
+            typeof(ResponsePacketData.SubGameEnded),
+            (isSuccess, data) => {
+                FindObjectOfType<InGameController>()?.OnResponseSubGameEnded(isSuccess, (ResponsePacketData.SubGameEnded)data);
+            }
+        },
+
+        {
             typeof(ResponsePacketData.DalgonaGameStarted),
             (isSuccess, data) => {
                 FindObjectOfType<InGameController>()?.OnResponseDalgonaGameStarted(isSuccess, (ResponsePacketData.DalgonaGameStarted)data);
+            }
+        },
+
+        {
+            typeof(ResponsePacketData.DalgonaGameResult),
+            (isSuccess, data) => {
+                FindObjectOfType<DalgonaController>()?.OnResponseDalgonaGameResult(isSuccess, (ResponsePacketData.DalgonaGameResult)data);
             }
         },
 
@@ -216,7 +230,7 @@ public class NetworkManager : MonoBehaviour
         { 1005, typeof(RequestPacketData.ReadyGame) },
 
         { 2001, typeof(RequestPacketData.ReadySubGame) },
-        
+        { 2102, typeof(RequestPacketData.DalgonaGameResult) },
     };
 
     private static readonly Dictionary<int, Type> _responseSignalToType = new()
@@ -229,8 +243,10 @@ public class NetworkManager : MonoBehaviour
         { 1005, typeof(ResponsePacketData.ReadyGame) },
 
         { 2001, typeof(ResponsePacketData.ReadySubGame) },
+        { 2002, typeof(ResponsePacketData.SubGameEnded) },
+
         { 2101, typeof(ResponsePacketData.DalgonaGameStarted) },
-        
+        { 2102, typeof(ResponsePacketData.DalgonaGameResult) },
     };
 
     public static Type GetRequestTypeFromSignal(int signal)
@@ -362,6 +378,8 @@ public abstract record RequestPacketData
     public sealed record ReadyGame() : RequestPacketData;
 
     public sealed record ReadySubGame() : RequestPacketData;
+
+    public sealed record DalgonaGameResult(bool isSuccess) : RequestPacketData;
     
 }
 
@@ -376,10 +394,12 @@ public abstract record ResponsePacketData
     public sealed record ReadyGame() : ResponsePacketData;
 
     public sealed record ReadySubGame() : ResponsePacketData;
+    public sealed record SubGameEnded(int[] survivePlayerIndices) : ResponsePacketData;
 
 
     public sealed record DalgonaGameStarted(int timeLimitMs) : ResponsePacketData;
 
+    public sealed record DalgonaGameResult(int playerIndex, bool isSuccess) : ResponsePacketData;
 
 }
 

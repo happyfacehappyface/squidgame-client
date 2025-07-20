@@ -5,21 +5,25 @@ using UnityEngine.SceneManagement;
 
 public class InGameController : MonoBehaviour
 {
+
     private int _myIndex;
     private string[] _playerNames;
-    private string[] PlayerNames => _playerNames;
+    public string[] PlayerNames => _playerNames;
     private string[] _playerIsAlive;
-    private string[] PlayerIsAlive => _playerIsAlive;
+    public string[] PlayerIsAlive => _playerIsAlive;
     private int _playerCount;
-    private int PlayerCount => _playerCount;
+    public int PlayerCount => _playerCount;
     private int _round;
-    private int Round => _round;
+    public int Round => _round;
     private ISubGameController _currentSubGame;
 
     private bool _isInititalized = false;
 
 
+    private ResponsePacketData.SubGameEnded _subGameEndedData;
+
     private ResponsePacketData.DalgonaGameStarted _dalgonaGameData;
+
 
 
     public void ManualStart(ResponsePacketData.StartGame startGameData)
@@ -48,6 +52,8 @@ public class InGameController : MonoBehaviour
         _currentSubGame.ManualUpdate();
     }
 
+    
+
     public void OnResponseReadyGame(bool isSuccess, ResponsePacketData.ReadyGame data)
     {
         if (isSuccess)
@@ -62,6 +68,25 @@ public class InGameController : MonoBehaviour
         {
             _currentSubGame.OnSubGameStarted(this);
         }
+    }
+
+    public void OnResponseSubGameEnded(bool isSuccess, ResponsePacketData.SubGameEnded data)
+    {
+        if (isSuccess)
+        {
+            _subGameEndedData = data;
+            SceneManager.LoadScene("WaitingScene");
+            SceneManager.sceneLoaded += OnWaitingSceneLoaded;
+        }
+    }
+
+    private void OnWaitingSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        SceneManager.sceneLoaded -= OnWaitingSceneLoaded;
+        WaitingController waitingController = FindObjectOfType<WaitingController>();
+        _currentSubGame = waitingController;
+        waitingController.OnSubGameStarted(this);
+        waitingController.OnShowSubGameResult(_subGameEndedData);
     }
 
     public void OnResponseDalgonaGameStarted(bool isSuccess, ResponsePacketData.DalgonaGameStarted data)

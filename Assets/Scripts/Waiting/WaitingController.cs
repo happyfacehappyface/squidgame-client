@@ -8,6 +8,9 @@ public class WaitingController : MonoBehaviour, ISubGameController
 
     private InGameController _inGameController;
 
+    [SerializeField] private GameObject _playerResultItemPrefab;
+    [SerializeField] private Transform _playerResultItemParent;
+
 
     public void OnSubGameStarted(InGameController inGameController)
     {
@@ -19,7 +22,30 @@ public class WaitingController : MonoBehaviour, ISubGameController
 
     }
 
-    
+    public void OnShowSubGameResult(ResponsePacketData.SubGameEnded data)
+    {
+        Utils.Log("Waiting Controller: OnShowSubGameResult");
+        UpdatePlayerResultItems(data.survivePlayerIndices);
+    }
+
+    private void UpdatePlayerResultItems(int[] alivePlayerIndices)
+    {
+        ClearPlayerResultItems();
+        
+        for (var i = 0; i < alivePlayerIndices.Length; i++)
+        {
+            GameObject playerResultItem = Instantiate(_playerResultItemPrefab, _playerResultItemParent);
+            playerResultItem.GetComponent<AlivePlayerItemComponent>().ManualStart(_inGameController.PlayerNames[alivePlayerIndices[i]]);
+        }
+    }
+
+    private void ClearPlayerResultItems()
+    {
+        foreach (Transform child in _playerResultItemParent)
+        {
+            Destroy(child.gameObject);
+        }
+    }
 
 
 }
