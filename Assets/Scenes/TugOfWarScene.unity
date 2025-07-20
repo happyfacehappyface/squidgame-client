@@ -1459,7 +1459,7 @@ MonoBehaviour:
   _leftPlayerParent: {fileID: 425804504}
   _rightPlayerParent: {fileID: 1837838870}
   _ropeAndPlayer: {fileID: 1358012164}
-  _ropeTransform: {fileID: 0}
+  _ropeTransform: {fileID: 1593816851}
   _redTeamSlider: {fileID: 845756293}
   _blueTeamSlider: {fileID: 901108623}
 --- !u!4 &1370791172
