@@ -11,6 +11,11 @@ public class TogOfWarController : MonoBehaviour, ISubGameController
 
     private InGameController _inGameController;
 
+    public void ManualStart()
+    {
+        
+    }
+
     public void OnSubGameStarted(InGameController inGameController)
     {
         _inGameController = inGameController;

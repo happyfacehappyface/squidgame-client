@@ -9,6 +9,8 @@ public class OutGameController : MonoBehaviour
 {
     private ResponsePacketData.StartGame _startGameData;
 
+    [SerializeField] private GameObject _inGameControllerPrefab;
+
     [SerializeField] private GameObject _tabTitle;
     [SerializeField] private GameObject _tabInRoom;
     [SerializeField] private GameObject _waitForServer;
@@ -134,6 +136,7 @@ public class OutGameController : MonoBehaviour
     private void OnInGameSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         SceneManager.sceneLoaded -= OnInGameSceneLoaded;
-        FindObjectOfType<InGameController>().ManualStart(_startGameData);
+        InGameController controller = Instantiate(_inGameControllerPrefab).GetComponent<InGameController>();
+        controller.ManualStart(_startGameData);
     }
 }

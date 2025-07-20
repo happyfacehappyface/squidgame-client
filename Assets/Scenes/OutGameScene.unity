@@ -1532,6 +1532,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eb0024e9c31c5ac41a8c6e15872fa841, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _inGameControllerPrefab: {fileID: 8620798753144962335, guid: e3732ae1436b6a543b2ec09633e33cad, type: 3}
   _tabTitle: {fileID: 587496942}
   _tabInRoom: {fileID: 931036265}
   _waitForServer: {fileID: 1189405615}
