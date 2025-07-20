@@ -1039,6 +1039,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 906997871}
+  - component: {fileID: 906997872}
   - component: {fileID: 906997870}
   - component: {fileID: 906997869}
   - component: {fileID: 906997868}
@@ -1352,6 +1353,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &906997872
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 906997867}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77ce9bead1a25c946ba432df2abb1824, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _sfxSource: {fileID: 906997869}
+  _bgmSource: {fileID: 906997870}
+  _voiceSource: {fileID: 906997868}
+  _sfxButtonClick:
+  - {fileID: 8300000, guid: 160ac4ff53dbb764ca11f9db234dd34a, type: 3}
+  _sfxDeath:
+  - {fileID: 8300000, guid: c03b860369c22554893a7023cafd6774, type: 3}
+  _sfxGameWin:
+  - {fileID: 8300000, guid: 27b2f707d4b34954dbef1e241e2e737d, type: 3}
+  _sfxGameLose:
+  - {fileID: 8300000, guid: 14d18d0096a26e847bf82a1a502c512a, type: 3}
+  _sfxGameDraw:
+  - {fileID: 8300000, guid: 2325c496c25cb4d489f006efd7051e38, type: 3}
+  _sfxGunShot:
+  - {fileID: 8300000, guid: f30981c8a013a3e4cac61bf00e27483e, type: 3}
+  - {fileID: 8300000, guid: eef164080ce2c04498b818c91b9713fb, type: 3}
+  _sfxDoor:
+  - {fileID: 8300000, guid: f396aa43049843d49a0b0da07ef6f5c4, type: 3}
+  - {fileID: 8300000, guid: f522725d335292b4486f260825dd17a2, type: 3}
 --- !u!1 &909230111
 GameObject:
   m_ObjectHideFlags: 0
@@ -2433,6 +2465,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1360429793}
   - component: {fileID: 1360429794}
+  - component: {fileID: 1360429795}
   m_Layer: 0
   m_Name: OutGameController
   m_TagString: Untagged
@@ -2467,11 +2500,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eb0024e9c31c5ac41a8c6e15872fa841, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _popupHandler: {fileID: 1360429795}
   _inGameControllerPrefab: {fileID: 8620798753144962335, guid: e3732ae1436b6a543b2ec09633e33cad, type: 3}
   _tabTitle: {fileID: 587496942}
   _tabInRoom: {fileID: 931036265}
   _waitForServer: {fileID: 1189405615}
   _playerCountText: {fileID: 934454134}
+--- !u!114 &1360429795
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1360429792}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a28c91a82b535db4daa44b9e246f03e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _popUpBlocker: {fileID: 1664036109}
+  _errorPopup: {fileID: 1945716658}
+  _errorTitle: {fileID: 970269300}
+  _errorDescription: {fileID: 1450286125}
 --- !u!1 &1450286123
 GameObject:
   m_ObjectHideFlags: 0

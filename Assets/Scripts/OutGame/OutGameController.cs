@@ -9,6 +9,8 @@ public class OutGameController : MonoBehaviour
 {
     private ResponsePacketData.StartGame _startGameData;
 
+    [SerializeField] private OutGamePopupHandler _popupHandler;
+
     [SerializeField] private GameObject _inGameControllerPrefab;
 
     [SerializeField] private GameObject _tabTitle;
@@ -30,21 +32,25 @@ public class OutGameController : MonoBehaviour
 
     public void OnClickEnterRoom()
     {
+        SoundManager.Instance.PlaySfxButtonClick(0.0f);
         RequestEnterRoom();
     }
 
     public void OnClickLeaveRoom()
     {
+        SoundManager.Instance.PlaySfxButtonClick(0.0f);
         RequestLeaveRoom();
     }
 
     public void OnClickStartGame()
     {
+        SoundManager.Instance.PlaySfxButtonClick(0.0f);
         RequestStartGame();
     }
 
     private void ManualStart()
     {
+        _popupHandler.ManualStart(this);
         OpenTabTitle();
     }
 
@@ -93,7 +99,7 @@ public class OutGameController : MonoBehaviour
         }
         else
         {
-            Debug.Log("방 입장 실패");
+            _popupHandler.OpenErrorPopup("문제 발생!", "게임이 이미 시작되었습니다.\n 다음 게임을 기다려주세요!");
         }
 
         _waitForServer.SetActive(false);
