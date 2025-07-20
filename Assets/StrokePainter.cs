@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
 /// <summary>
 /// A Dalgona game controller that uses multiple LineRenderers to create complex, non-continuous shapes.
@@ -268,13 +269,13 @@ public class StrokePainter : MonoBehaviour
         // --- 3. Define the centerline for the shared edge ---
         Vector3 midTailStart = (upperTailStart + lowerTailStart) / 2f;
         Vector3 tailControlOffset = new Vector3(shapeSize * 0.4f, shapeSize * 0.1f, 0);
-        Vector3 tailEndOffset     = new Vector3(shapeSize * 0.9f, -shapeSize * 0.1f, 0);
+        Vector3 tailEndOffset     = new Vector3(shapeSize * 0.8f, -shapeSize * 0.1f, 0); // Shortened the tail length
         Vector3 midTailControl = midTailStart + tailControlOffset;
         Vector3 midTailEnd   = midTailStart + tailEndOffset;
 
         // --- 4. Generate the three parallel curves (upper, middle, lower) ---
         int tailSegments = 25;
-        float ribbonWidth = shapeSize / 8f; // This is the distance from the centerline to an outer edge.
+        float ribbonWidth = shapeSize / 7f; // This is the distance from the centerline to an outer edge.
 
         List<Vector3> upperCurve = new List<Vector3>();
         List<Vector3> middleCurve = new List<Vector3>();
@@ -293,27 +294,78 @@ public class StrokePainter : MonoBehaviour
             lowerCurve.Add(midPoint - normal * ribbonWidth);
         }
 
-        // --- 5. Create the final shapes: one outline and one centerline ---
+        // --- 5. Create the final shapes: one outline and one centerline to avoid overlap ---
         
-        // The centerline is the shared middle curve
-        CreateLine(middleCurve, false);
+        // To prevent the middle line from overlapping the star, we shorten it by removing the first few points.
+        int pointsToSkip = 4; // Adjust this to control the size of the gap.
+        List<Vector3> shorterMidCurve = (middleCurve.Count > pointsToSkip)
+            ? middleCurve.GetRange(pointsToSkip, middleCurve.Count - pointsToSkip)
+            : middleCurve;
+
+        // The centerline is the shared middle curve, drawn once as an open line
+        CreateLine(shorterMidCurve, false);
 
         // The outline is a single closed loop made from the outer curves
         List<Vector3> outlinePoints = new List<Vector3>();
         outlinePoints.AddRange(upperCurve);
         
-        // Add an end cap
-        Vector3 endDirection = (midTailEnd - midTailControl).normalized;
-        float totalWidth = ribbonWidth * 2f;
-        Vector3 vPoint = middleCurve[middleCurve.Count - 1] - endDirection * totalWidth * 0.75f;
-        outlinePoints.Add(vPoint);
+        // Add a spikier, "double V" end cap
+        Vector3 upperEnd = upperCurve.Last();
+        Vector3 lowerEnd = lowerCurve.Last();
+        Vector3 direction = (midTailEnd - midTailControl).normalized;
+
+        float indentDepth = ribbonWidth * 1.2f;
+        float spikeLength = ribbonWidth * 0.5f;
+
+        // Define the 5 key points of the double V shape, spreading the valleys further apart.
+        Vector3 point_upper_quarter = Vector3.Lerp(upperEnd, lowerEnd, 0.25f);
+        Vector3 point_lower_three_quarters = Vector3.Lerp(upperEnd, lowerEnd, 0.75f);
+        Vector3 centerPoint = (upperEnd + lowerEnd) / 2f;
+
+        Vector3 valley1 = point_upper_quarter - direction * indentDepth;
+        Vector3 midSpike = centerPoint + direction * spikeLength;
+        Vector3 valley2 = point_lower_three_quarters - direction * indentDepth;
+
+        const int subdivisions = 1; // Add 1 point on each segment of the cap
+
+        // Segment 1: upperEnd -> valley1
+        AddSubdividedSegment(outlinePoints, upperEnd, valley1, subdivisions);
         
+        // Segment 2: valley1 -> midSpike
+        AddSubdividedSegment(outlinePoints, valley1, midSpike, subdivisions);
+
+        // Segment 3: midSpike -> valley2
+        AddSubdividedSegment(outlinePoints, midSpike, valley2, subdivisions);
+
+        // Segment 4: valley2 -> lowerEnd
+        AddSubdividedSegment(outlinePoints, valley2, lowerEnd, subdivisions);
+
         lowerCurve.Reverse();
         outlinePoints.AddRange(lowerCurve);
         
+        // Add a V-shaped start cap that connects to the star
+        Vector3 startUpperCorner = upperCurve.First();
+        Vector3 startLowerCorner = lowerCurve.Last(); // This is the final point in the list now
+        Vector3 startCenter = (startUpperCorner + startLowerCorner) / 2f;
+        Vector3 directionToStar = (starCenter - startCenter).normalized;
+        float startCapDepth = ribbonWidth * 1.5f;
+        // Reversed the direction of the V-cap to point outwards
+        Vector3 startValley = startCenter - directionToStar * startCapDepth;
+
+        outlinePoints.Add(startValley);
+
         CreateLine(outlinePoints, true); // Create a closed loop for the outline
     }
-    
+
+    private void AddSubdividedSegment(List<Vector3> points, Vector3 start, Vector3 end, int divisions)
+    {
+        for (int i = 1; i <= divisions; i++)
+        {
+            points.Add(Vector3.Lerp(start, end, (float)i / (divisions + 1)));
+        }
+        points.Add(end);
+    }
+
     private void CreateLine(List<Vector3> points, bool loop)
     {
         GameObject segmentGO = Instantiate(dalgonaSegmentPrefab, dalgonaShapeContainer);
@@ -519,7 +571,7 @@ public class StrokePainter : MonoBehaviour
     {
         if (dalgonaLines.Count == 0)
         {
-            Debug.LogWarning("[DEBUG] dalgonaLines가 비어있습니다. 에디터에서 [Generate Sierpinski Triangle]을 실행했는지 또는 게임 시작 시 모양이 생성되는지 확인해주세요.");
+            // Debug.LogWarning("[DEBUG] dalgonaLines가 비어있습니다. 에디터에서 [Generate Sierpinski Triangle]을 실행했는지 또는 게임 시작 시 모양이 생성되는지 확인해주세요.");
             return false;
         }
 
@@ -537,6 +589,17 @@ public class StrokePainter : MonoBehaviour
                     minDistanceOverall = distance;
                 }
             }
+            // If the line is a loop, we must also check the segment connecting the last and first points.
+            if (line.loop && line.positionCount > 1)
+            {
+                Vector3 p1_3D = line.useWorldSpace ? line.GetPosition(line.positionCount - 1) : line.transform.TransformPoint(line.GetPosition(line.positionCount - 1));
+                Vector3 p2_3D = line.useWorldSpace ? line.GetPosition(0) : line.transform.TransformPoint(line.GetPosition(0));
+                float distance = DistancePointToLineSegment(new Vector2(point.x, point.y), new Vector2(p1_3D.x, p1_3D.y), new Vector2(p2_3D.x, p2_3D.y));
+                if (distance < minDistanceOverall)
+                {
+                    minDistanceOverall = distance;
+                }
+            }
         }
 
         bool isOnPath = minDistanceOverall <= tolerance;
@@ -548,7 +611,7 @@ public class StrokePainter : MonoBehaviour
         }
         else
         {
-            Debug.Log($"[DEBUG] 경로 위에 있습니다. 마우스 위치: {point}, 가장 가까운 선분과의 거리: {minDistanceOverall}, 허용 오차: {tolerance}");
+            // Debug.Log($"[DEBUG] 경로 위에 있습니다. 마우스 위치: {point}, 가장 가까운 선분과의 거리: {minDistanceOverall}, 허용 오차: {tolerance}");
         }
 
         return isOnPath;
