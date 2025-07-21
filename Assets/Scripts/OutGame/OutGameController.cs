@@ -114,10 +114,17 @@ public class OutGameController : MonoBehaviour
         {
             _startGameData = data;
             
-            // 씬 로드 완료 후 실행될 이벤트 등록
-            SceneManager.sceneLoaded += OnInGameSceneLoaded;
-            SceneManager.LoadScene("WaitingScene");
+            StartCoroutine(CO_OpenInGameScene());
         }
+    }
+
+    private IEnumerator CO_OpenInGameScene()
+    {
+        _canvasAnimator.SetTrigger("InGame");
+        yield return new WaitForSeconds(1.0f);
+
+        SceneManager.sceneLoaded += OnInGameSceneLoaded;
+        SceneManager.LoadScene("WaitingScene");
     }
 
     private void OnInGameSceneLoaded(Scene scene, LoadSceneMode mode)

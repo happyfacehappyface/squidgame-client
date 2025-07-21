@@ -1,56 +1,45 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
-public class WaitingController : MonoBehaviour, ISubGameController
+public class WaitingController : MonoBehaviour
 {
 
     private InGameController _inGameController;
 
+    [SerializeField] private PlayerComponent _playerComponent;
+    [SerializeField] private TextMeshProUGUI _playerNameText;
+    [SerializeField] private TextMeshProUGUI _alivePlayerCountText;
 
-    [SerializeField] private GameObject _playerResultItemPrefab;
-    [SerializeField] private Transform _playerResultItemParent;
 
-
-    public void ManualStart(InGameController inGameController)
+    public void ManualStart(InGameController inGameController, ResponsePacketData.StartGame data)
     {
         _inGameController = inGameController;
-    }
 
-    public void OnSubGameStarted()
-    {
+        UpdateWaitingScene(data);
+
+        StartCoroutine(CO_SendReadyGame());
         
     }
 
-    public void ManualUpdate()
+    private IEnumerator CO_SendReadyGame()
     {
-
+        yield return new WaitForSeconds(1.0f);
+        NetworkManager.Instance.SendMessageToServer(new RequestPacketData.ReadyGame());
     }
 
-    public void OnShowSubGameResult(ResponsePacketData.SubGameEnded data)
+
+    private void UpdateWaitingScene(ResponsePacketData.StartGame data)
     {
-        Utils.Log("Waiting Controller: OnShowSubGameResult");
-        UpdatePlayerResultItems(data.survivePlayerIndices);
+        _playerComponent.ManualStart(data.myIndex);
+        _playerNameText.text = data.names[data.myIndex];
+        _alivePlayerCountText.text = data.names.Length.ToString();
     }
 
-    private void UpdatePlayerResultItems(int[] alivePlayerIndices)
-    {
-        ClearPlayerResultItems();
-        
-        for (var i = 0; i < alivePlayerIndices.Length; i++)
-        {
-            GameObject playerResultItem = Instantiate(_playerResultItemPrefab, _playerResultItemParent);
-            playerResultItem.GetComponent<AlivePlayerItemComponent>().ManualStart(_inGameController.PlayerNames[alivePlayerIndices[i]]);
-        }
-    }
 
-    private void ClearPlayerResultItems()
-    {
-        foreach (Transform child in _playerResultItemParent)
-        {
-            Destroy(child.gameObject);
-        }
-    }
+
 
 
 }

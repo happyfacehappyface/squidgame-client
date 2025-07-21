@@ -38,11 +38,14 @@ public class InGameController : MonoBehaviour
         _playerCount = _playerNames.Length;
         _round = 0;
         DontDestroyOnLoad(gameObject);
-        _currentSubGame = FindObjectOfType<WaitingController>();
+
+        WaitingController waitingController = FindObjectOfType<WaitingController>();
+        waitingController.ManualStart(this, startGameData);
+
+        _currentSubGame = null;
 
         _isInititalized = true;
 
-        NetworkManager.Instance.SendMessageToServer(new RequestPacketData.ReadyGame());
     }
 
     private void ManualUpdate()
@@ -52,7 +55,7 @@ public class InGameController : MonoBehaviour
             return;
         }
 
-        _currentSubGame.ManualUpdate();
+        _currentSubGame?.ManualUpdate();
     }
 
     
@@ -69,7 +72,7 @@ public class InGameController : MonoBehaviour
     {
         if (isSuccess)
         {
-            _currentSubGame.OnSubGameStarted();
+            _currentSubGame?.OnSubGameStarted();
         }
     }
 
@@ -77,20 +80,24 @@ public class InGameController : MonoBehaviour
     {
         if (isSuccess)
         {
-            _subGameEndedData = data;
-            SceneManager.LoadScene("WaitingScene");
-            SceneManager.sceneLoaded += OnWaitingSceneLoaded;
+            Utils.Log("OnResponseSubGameEnded");
+            //_subGameEndedData = data;
+            //SceneManager.LoadScene("WaitingScene");
+            //SceneManager.sceneLoaded += OnWaitingSceneLoaded;
         }
     }
 
+
+/*
     private void OnWaitingSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         SceneManager.sceneLoaded -= OnWaitingSceneLoaded;
         WaitingController waitingController = FindObjectOfType<WaitingController>();
         _currentSubGame = waitingController;
         waitingController.ManualStart(this);
-        waitingController.OnShowSubGameResult(_subGameEndedData);
+        //waitingController.OnShowSubGameResult(_subGameEndedData);
     }
+    */
 
     public void OnResponseGameEnded(bool isSuccess, ResponsePacketData.GameEnded data)
     {
