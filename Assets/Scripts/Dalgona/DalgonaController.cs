@@ -9,7 +9,7 @@ public class DalgonaController : MonoBehaviour, ISubGameController
 
     [Header("UI & Game Control")]
     [SerializeField] private GameObject _preGameBarrier;
-    [SerializeField] private GameObject _shapeSelectionUI;
+    [SerializeField] private GameObject _shapeSelectionBarrier;
     [SerializeField] private GameObject _dalgonaGameplay;
     [SerializeField] private StrokePainter _strokePainter;
 
@@ -66,13 +66,14 @@ public class DalgonaController : MonoBehaviour, ISubGameController
     {
         Debug.Log($"모양({shape}, 난이도:{difficulty}) 선택됨. 게임플레이를 시작합니다.");
 
-        _shapeSelectionUI.SetActive(false);
         
         if(_strokePainter != null)
         {
             _strokePainter.shapeToGenerate = shape;
             _strokePainter.difficultyLevel = difficulty;
         }
+
+        _shapeSelectionBarrier.SetActive(true);
 
         _dalgonaGameplay.SetActive(true);
 

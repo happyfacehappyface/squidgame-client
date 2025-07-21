@@ -3,6 +3,8 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using System;
+using System.Collections;
 
 public class ShapeSelectionController : MonoBehaviour
 {
@@ -10,6 +12,14 @@ public class ShapeSelectionController : MonoBehaviour
     public Button circleButton;
     public Button triangleButton;
     public Button starButton;
+
+    [SerializeField] private Animator _circleButtonAnimator;
+    [SerializeField] private Animator _triangleButtonAnimator;
+    [SerializeField] private Animator _starButtonAnimator;
+
+    [SerializeField] private Transform _circleButtonTransform;
+    [SerializeField] private Transform _triangleButtonTransform;
+    [SerializeField] private Transform _starButtonTransform;
     
     [SerializeField] private DalgonaController dalgonaController;
 
@@ -48,11 +58,49 @@ public class ShapeSelectionController : MonoBehaviour
     {
         if (dalgonaController != null)
         {
+            switch (shape)
+            {
+                case StrokePainter.DalgonaShapeType.Circle:
+                    _circleButtonAnimator.SetTrigger("Spin");
+                    _triangleButtonAnimator.SetTrigger("Shrink");
+                    _starButtonAnimator.SetTrigger("Shrink");
+                    StartCoroutine(CO_AdjustButton(_circleButtonTransform));
+                    break;
+                case StrokePainter.DalgonaShapeType.SierpinskiTriangle:
+                    _triangleButtonAnimator.SetTrigger("Spin");
+                    _circleButtonAnimator.SetTrigger("Shrink");
+                    _starButtonAnimator.SetTrigger("Shrink");
+                    StartCoroutine(CO_AdjustButton(_triangleButtonTransform));
+                    break;
+                case StrokePainter.DalgonaShapeType.Star:
+                    _starButtonAnimator.SetTrigger("Spin");
+                    _circleButtonAnimator.SetTrigger("Shrink");
+                    _triangleButtonAnimator.SetTrigger("Shrink");
+                    StartCoroutine(CO_AdjustButton(_starButtonTransform));
+                    break;
+            }
+
             dalgonaController.OnShapeSelected(shape, shapeDifficulties[shape]);
         }
         else
         {
             Debug.LogError("DalgonaController가 연결되지 않았습니다!");
+        }
+    }
+
+    private IEnumerator CO_AdjustButton(Transform button)
+    {
+
+        float progress = 0.0f;
+        float duration = 0.8f;
+
+        Vector3 originTransform = button.localPosition;
+        Vector3 destTransform = new Vector3(0f, 0f, 0f);
+        while (progress < 1.0f)
+        {
+            progress += Time.deltaTime / duration;
+            button.localPosition = Vector3.Lerp(originTransform, destTransform, progress);
+            yield return null;
         }
     }
 
