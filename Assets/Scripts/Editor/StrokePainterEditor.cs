@@ -13,6 +13,8 @@ public class StrokePainterEditor : Editor
     private SerializedProperty customShapeProfileProp;
     private SerializedProperty toleranceProp;
     private SerializedProperty completionPercentageProp;
+    private SerializedProperty toleranceMaterialProp;
+    private SerializedProperty timerTextProp;
     
     private int selectedPathIndex = -1;
 
@@ -25,6 +27,8 @@ public class StrokePainterEditor : Editor
         customShapeProfileProp = serializedObject.FindProperty("customShapeProfile");
         toleranceProp = serializedObject.FindProperty("tolerance");
         completionPercentageProp = serializedObject.FindProperty("completionPercentage");
+        toleranceMaterialProp = serializedObject.FindProperty("toleranceMaterial");
+        timerTextProp = serializedObject.FindProperty("timerText");
     }
 
     public override void OnInspectorGUI()
@@ -45,11 +49,50 @@ public class StrokePainterEditor : Editor
             EditorGUILayout.PropertyField(shapeSizeProp);
             EditorGUILayout.PropertyField(difficultyLevelProp);
         }
+        
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("UI", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(timerTextProp);
 
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Game Rules", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(toleranceProp);
-        EditorGUILayout.PropertyField(completionPercentageProp);
+
+        bool starLevel2 = (shapeType == StrokePainter.DalgonaShapeType.Star && difficultyLevelProp.intValue == 2);
+        bool starLevel3 = (shapeType == StrokePainter.DalgonaShapeType.Star && difficultyLevelProp.intValue == 3);
+
+        // -- Tolerance Field --
+        EditorGUI.BeginDisabledGroup(starLevel3);
+        if (starLevel3)
+        {
+            EditorGUILayout.FloatField(toleranceProp.displayName, 0.17f);
+        }
+        else
+        {
+            EditorGUILayout.PropertyField(toleranceProp);
+        }
+        EditorGUI.EndDisabledGroup();
+        if (starLevel3)
+        {
+            EditorGUILayout.HelpBox("Tolerance is fixed to 0.17 for this level (Starbucks Logo).", MessageType.Info);
+        }
+
+        // -- Completion Percentage Field --
+        EditorGUI.BeginDisabledGroup(starLevel2);
+        if (starLevel2)
+        {
+            EditorGUILayout.FloatField(completionPercentageProp.displayName, 0.91f);
+        }
+        else
+        {
+            EditorGUILayout.PropertyField(completionPercentageProp);
+        }
+        EditorGUI.EndDisabledGroup();
+        if (starLevel2)
+        {
+            EditorGUILayout.HelpBox("Completion Percentage is fixed to 0.91 for this level (Shooting Star).", MessageType.Info);
+        }
+
+        EditorGUILayout.PropertyField(toleranceMaterialProp);
 
         serializedObject.ApplyModifiedProperties();
     }

@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 
 /// <summary>
 /// A Dalgona game controller that uses multiple LineRenderers to create complex, non-continuous shapes.
@@ -43,13 +44,23 @@ public class StrokePainter : MonoBehaviour
     [Header("Game Rules")]
     [Tooltip("Allowed distance from the shape's path.")]
     public float tolerance = 0.1f;
-    [Tooltip("The percentage of the shape that must be traced for success.")]
+    [Tooltip("The percentage of the shape that must be traced for success. This is the default value.")]
     [Range(0.1f, 1f)]
-    public float completionPercentage = 0.9f;
+    public float completionPercentage = 0.99f;
+
+    // --- Private runtime values for game rules ---
+    private float _runtimeTolerance;
+    private float _runtimeCompletionPercentage;
+
+    [Header("UI")]
+    [Tooltip("The TextMeshPro UI element to display the timer.")]
+    public TextMeshProUGUI timerText;
 
     [Header("Visuals")]
     [Tooltip("Material to apply to the line when the game is over.")]
     public Material failedMaterial;
+    [Tooltip("Material for the tolerance visualization lines.")]
+    public Material toleranceMaterial;
     [Tooltip("A container for the tolerance visualizers. Will be auto-populated.")]
     public Transform toleranceVisualizerContainer;
 
@@ -60,6 +71,10 @@ public class StrokePainter : MonoBehaviour
     private Camera mainCamera;
     private bool isGameOver, isGameWon, isDrawing;
     private LineRenderer currentStrokeRenderer;
+
+    private float gameDuration = 35f;
+    private float currentTime;
+    private bool isTimerRunning = false;
 
     private List<bool[]> completionPointTrackers;
     private int totalPointsInShape = 0;
@@ -77,14 +92,32 @@ public class StrokePainter : MonoBehaviour
 
         // Always clear any pre-existing shapes and generate the currently selected one at runtime.
         // This ensures the game view is always in sync with the inspector settings.
+        
+        // Load settings from the GameManager if it exists
+        if (GameManager.Instance != null)
+        {
+            shapeToGenerate = GameManager.Instance.selectedShape;
+            difficultyLevel = GameManager.Instance.selectedDifficulty;
+            Debug.Log($"Loaded from GameManager: Shape={shapeToGenerate}, Difficulty={difficultyLevel}");
+        }
+
         ClearShape();
         GenerateShape();
+
+        // Start the timer
+        currentTime = gameDuration;
+        isTimerRunning = true;
+        UpdateTimerUI();
     }
 
     [ContextMenu("Generate Shape")]
     private void GenerateShape()
     {
         ClearShape(); // Clear existing shapes before generating new ones
+
+        // Set runtime game rules to default values from the inspector first.
+        _runtimeTolerance = tolerance;
+        _runtimeCompletionPercentage = completionPercentage;
 
         switch (shapeToGenerate)
         {
@@ -170,11 +203,15 @@ public class StrokePainter : MonoBehaviour
                 break;
             case 2:
                 // Shooting Star
+                // Rule override for Shooting Star: Completion Percentage = 0.91
+                _runtimeCompletionPercentage = 0.91f;
                 GenerateShootingStar();
                 break;
             case 3:
-                // Starbucks-inspired logo
-                GenerateStarbucksLogo();
+                // For level 3, load the user-created shape from the profile.
+                // Rule override for Starbucks: Tolerance = 0.17
+                _runtimeTolerance = 0.17f;
+                GenerateCustomShape();
                 break;
         }
     }
@@ -300,7 +337,7 @@ public class StrokePainter : MonoBehaviour
 
         // --- 4. Generate the three parallel curves (upper, middle, lower) ---
         int tailSegments = 25;
-        float ribbonWidth = shapeSize / 7f; // This is the distance from the centerline to an outer edge.
+        float ribbonWidth = shapeSize /8f; // This is the distance from the centerline to an outer edge.
 
         List<Vector3> upperCurve = new List<Vector3>();
         List<Vector3> middleCurve = new List<Vector3>();
@@ -542,29 +579,43 @@ public class StrokePainter : MonoBehaviour
     }
 
     // --- Core Game Logic ---
-    void Update() { if (isGameOver || isGameWon) return; if (Input.GetMouseButtonDown(0)) StartDrawing(); if (Input.GetMouseButton(0) && isDrawing) ContinueDrawing(); if (Input.GetMouseButtonUp(0) && isDrawing) StopDrawing(); }
-    private void StartDrawing() { Vector3 mousePos = GetMouseWorldPosition(); GameObject strokeGO = Instantiate(strokePrefab, Vector3.zero, Quaternion.identity, this.transform); currentStrokeRenderer = strokeGO.GetComponent<LineRenderer>(); currentStrokeRenderer.positionCount = 0; if (dalgonaLines.Count > 0) currentStrokeRenderer.sortingOrder = dalgonaLines[0].sortingOrder + 1; AddPointToLine(mousePos); if (!IsPointOnPath(mousePos)) { TriggerGameOver(); return; } else { CheckShapeCoverage(mousePos); } isDrawing = true; }
-    private void ContinueDrawing()
+    void Update()
     {
-        Vector3 mousePos = GetMouseWorldPosition();
-        AddPointToLine(mousePos);
-        if (!IsPointOnPath(mousePos))
+        if (isTimerRunning)
         {
-            TriggerGameOver();
+            currentTime -= Time.deltaTime;
+            UpdateTimerUI();
+
+            if (currentTime <= 0f)
+            {
+                currentTime = 0f;
+                UpdateTimerUI();
+                isTimerRunning = false;
+                TriggerGameOver("시간 초과! (Time's Up!)");
+                return; // Stop further processing this frame
+            }
         }
-        else
-        {
-            CheckShapeCoverage(mousePos);
-            // DEBUG: Log current progress
-            float currentCoverage = (totalPointsInShape > 0) ? (float)coveredPointsCount / totalPointsInShape : 0f;
-            Debug.Log($"진행률 (Progress): {currentCoverage * 100:F1}% ({coveredPointsCount} / {totalPointsInShape} points)");
-        }
+
+        if (isGameOver || isGameWon) return;
+        if (Input.GetMouseButtonDown(0)) StartDrawing();
+        if (Input.GetMouseButton(0) && isDrawing) ContinueDrawing();
+        if (Input.GetMouseButtonUp(0) && isDrawing) StopDrawing();
     }
-    private void StopDrawing() { isDrawing = false; currentStrokeRenderer = null; float currentCoverage = 0f; if (totalPointsInShape > 0) currentCoverage = (float)coveredPointsCount / totalPointsInShape; Debug.Log($"현재 총 완성도 (Total Coverage): {currentCoverage * 100:F1}%"); if (currentCoverage >= completionPercentage) TriggerGameWon(); }
-    private void TriggerGameOver() { Debug.LogError("실패! 경로를 벗어났습니다. (Game Over! You strayed from the path.)"); isGameOver = true; isDrawing = false; if (currentStrokeRenderer != null && failedMaterial != null) currentStrokeRenderer.material = failedMaterial; }
-    private void TriggerGameWon() { Debug.Log("성공! 모양을 완성했습니다! (Success! You completed the shape!)"); isGameWon = true; this.enabled = false; }
+    private void StartDrawing() { Vector3 mousePos = GetMouseWorldPosition(); GameObject strokeGO = Instantiate(strokePrefab, Vector3.zero, Quaternion.identity, this.transform); currentStrokeRenderer = strokeGO.GetComponent<LineRenderer>(); currentStrokeRenderer.positionCount = 0; if (dalgonaLines.Count > 0) currentStrokeRenderer.sortingOrder = dalgonaLines[0].sortingOrder + 1; AddPointToLine(mousePos); if (!IsPointOnPath(mousePos)) { TriggerGameOver("실패! 경로를 벗어났습니다. (Game Over! You strayed from the path.)"); return; } else { CheckShapeCoverage(mousePos); } isDrawing = true; }
+    private void ContinueDrawing() { Vector3 mousePos = GetMouseWorldPosition(); AddPointToLine(mousePos); if (!IsPointOnPath(mousePos)) { TriggerGameOver("실패! 경로를 벗어났습니다. (Game Over! You strayed from the path.)"); } else { CheckShapeCoverage(mousePos); } }
+    private void StopDrawing() { isDrawing = false; currentStrokeRenderer = null; float currentCoverage = 0f; if (totalPointsInShape > 0) currentCoverage = (float)coveredPointsCount / totalPointsInShape; Debug.Log($"현재 총 완성도 (Total Coverage): {currentCoverage * 100:F1}%"); if (currentCoverage >= _runtimeCompletionPercentage) TriggerGameWon(); }
+    private void TriggerGameOver(string reason) { Debug.LogError(reason); isGameOver = true; isDrawing = false; isTimerRunning = false; if (currentStrokeRenderer != null && failedMaterial != null) currentStrokeRenderer.material = failedMaterial; }
+    private void TriggerGameWon() { Debug.Log("성공! 모양을 완성했습니다! (Success! You completed the shape!)"); isGameWon = true; isTimerRunning = false; this.enabled = false; }
     private void AddPointToLine(Vector3 position) { if (currentStrokeRenderer == null) return; if (currentStrokeRenderer.positionCount > 0 && Vector3.Distance(currentStrokeRenderer.GetPosition(currentStrokeRenderer.positionCount - 1), position) < 0.01f) return; currentStrokeRenderer.positionCount++; currentStrokeRenderer.SetPosition(currentStrokeRenderer.positionCount - 1, position); }
     private Vector3 GetMouseWorldPosition() { Vector3 mousePos = Input.mousePosition; mousePos.z = mainCamera.nearClipPlane + 10; return mainCamera.ScreenToWorldPoint(mousePos); }
+
+    private void UpdateTimerUI()
+    {
+        if (timerText != null)
+        {
+            timerText.text = currentTime.ToString("F2"); // "F2" formats the float to two decimal places
+        }
+    }
 
     private void CheckShapeCoverage(Vector3 drawnPoint)
     {
@@ -580,7 +631,7 @@ public class StrokePainter : MonoBehaviour
                 if (!tracker[j])
                 {
                     Vector3 shapePoint3D = line.useWorldSpace ? line.GetPosition(j) : line.transform.TransformPoint(line.GetPosition(j));
-                    if (Vector2.Distance(drawnPoint2D, new Vector2(shapePoint3D.x, shapePoint3D.y)) <= tolerance)
+                    if (Vector2.Distance(drawnPoint2D, new Vector2(shapePoint3D.x, shapePoint3D.y)) <= _runtimeTolerance)
                     {
                         tracker[j] = true;
                     }
@@ -625,16 +676,16 @@ public class StrokePainter : MonoBehaviour
             }
         }
 
-        bool isOnPath = minDistanceOverall <= tolerance;
+        bool isOnPath = minDistanceOverall <= _runtimeTolerance;
 
         // Detailed log to show exactly what's happening.
         if (!isOnPath)
         {
-            Debug.LogError($"[DEBUG] 실패! 경로를 벗어났습니다. 마우스 위치: {point}, 가장 가까운 선분과의 거리: {minDistanceOverall}, 허용 오차: {tolerance}");
+            Debug.LogError($"[DEBUG] 실패! 경로를 벗어났습니다. 마우스 위치: {point}, 가장 가까운 선분과의 거리: {minDistanceOverall}, 허용 오차: {_runtimeTolerance}");
         }
         else
         {
-            // Debug.Log($"[DEBUG] 경로 위에 있습니다. 마우스 위치: {point}, 가장 가까운 선분과의 거리: {minDistanceOverall}, 허용 오차: {tolerance}");
+            // Debug.Log($"[DEBUG] 경로 위에 있습니다. 마우스 위치: {point}, 가장 가까운 선분과의 거리: {minDistanceOverall}, 허용 오차: {_runtimeTolerance}");
         }
 
         return isOnPath;
@@ -663,6 +714,13 @@ public class StrokePainter : MonoBehaviour
         {
             GameObject visualizerGO = Instantiate(dalgonaSegmentPrefab, toleranceVisualizerContainer);
             LineRenderer visualizerLR = visualizerGO.GetComponent<LineRenderer>();
+
+            // Assign the dedicated tolerance material if it exists
+            if (toleranceMaterial != null)
+            {
+                visualizerLR.material = toleranceMaterial;
+            }
+
             visualizerLR.useWorldSpace = dalgonaLine.useWorldSpace;
             if(!visualizerLR.useWorldSpace)
             {
@@ -672,8 +730,8 @@ public class StrokePainter : MonoBehaviour
             dalgonaLine.GetPositions(points);
             visualizerLR.positionCount = dalgonaLine.positionCount;
             visualizerLR.SetPositions(points);
-            visualizerLR.startWidth = tolerance * 2f;
-            visualizerLR.endWidth = tolerance * 2f;
+            visualizerLR.startWidth = _runtimeTolerance * 2f;
+            visualizerLR.endWidth = _runtimeTolerance * 2f;
             visualizerLR.loop = dalgonaLine.loop;
             visualizerLR.sortingOrder = dalgonaLine.sortingOrder - 1;
             toleranceLines.Add(visualizerLR);
