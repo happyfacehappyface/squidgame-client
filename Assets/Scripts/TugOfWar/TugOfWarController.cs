@@ -4,6 +4,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using System;
 
 public class TugOfWarController : MonoBehaviour, ISubGameController
 {
@@ -23,6 +24,11 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
 
     [SerializeField] private TextMeshProUGUI _noticeText;
     [SerializeField] private Animator _spaceBarAnimator;
+
+    [Header("Timer")]
+    [SerializeField] private TextMeshProUGUI _timerText;
+    private TimeSpan _currentTime;
+    private bool _isTimerRunning = false;
 
     private InGameController _inGameController;
 
@@ -51,6 +57,9 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
         _inGameController = inGameController;
         _gameState = TugOfWarGameState.Waiting;
         _tugOfWarGameData = data;
+        _isTimerRunning = false;
+        _currentTime = TimeSpan.FromMilliseconds(data.timeLimitMs);
+        UpdateTimerUI();
         SoundManager.Instance.PlaySfxSubGameStart(0.0f);
         CreatePlayerCharacters();
 
@@ -64,6 +73,7 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
     {
         Utils.Log("TugOfWarController.OnSubGameStarted");
         _gameState = TugOfWarGameState.Playing;
+        _isTimerRunning = true;
         _pressCount = 0;
         _deltaPressCountMovingAverage = 0.0f;
         _keepSendingPressCountToServerCoroutine = StartCoroutine(CO_KeepSendingPressCountToServer());
@@ -177,6 +187,11 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
 
     public void ManualUpdate()
     {
+        if (_isTimerRunning)
+        {
+            _currentTime -= TimeSpan.FromSeconds(Time.deltaTime);
+            UpdateTimerUI();
+        }
 
         if (_gameState != TugOfWarGameState.Playing)
         {
@@ -190,6 +205,11 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
 
         UpdateViewUsingDeltaPressCount();
 
+    }
+
+    private void UpdateTimerUI()
+    {
+        _timerText.text = $"{Mathf.Max(0, (float) _currentTime.TotalSeconds):F2}";
     }
 
     private void UpdateViewUsingDeltaPressCount()
@@ -217,7 +237,7 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
         float interval;
         while (true)
         {
-            interval = Random.Range(0.5f, 1.0f);
+            interval = UnityEngine.Random.Range(0.5f, 1.0f);
             yield return new WaitForSeconds(interval);
             SendPressCountToServer();
         }
@@ -321,7 +341,7 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
         for (int i = 0; i < playerCount; i++)
         {
             playerPositionOrigin[i] = isLeftWin ? _rightTeamPlayerComponents[i].transform.localPosition : _leftTeamPlayerComponents[i].transform.localPosition;
-            playerPositionDestination[i] = new Vector3(Random.Range(400f, 1400f), Random.Range(150f, 500f), 0.0f);
+            playerPositionDestination[i] = new Vector3(UnityEngine.Random.Range(400f, 1400f), UnityEngine.Random.Range(150f, 500f), 0.0f);
         }
 
         
