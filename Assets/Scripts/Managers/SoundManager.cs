@@ -17,9 +17,14 @@ public class SoundManager : MonoBehaviour
     [SerializeField] private AudioClip[] _sfxGameDraw;
     [SerializeField] private AudioClip[] _sfxGunShot;
     [SerializeField] private AudioClip[] _sfxDoor;
-    
 
-    
+    [SerializeField] private AudioClip[] _sfxSplash;
+
+    [SerializeField] private AudioClip[] _sfxLaser;
+    [SerializeField] private AudioClip[] _spaceShip;
+    [SerializeField] private AudioClip[] _gameStart;
+
+
     private bool _isReady = false;
 
     private void Awake()
@@ -50,6 +55,10 @@ public class SoundManager : MonoBehaviour
     public void PlaySfxGameDraw(float delay) => PlayRandomSfx(_sfxGameDraw, delay);
     public void PlaySfxGunShot(float delay) => PlayRandomSfx(_sfxGunShot, delay);
     public void PlaySfxDoor(float delay) => PlayRandomSfx(_sfxDoor, delay);
+    public void PlaySfxSplash(float delay) => PlayRandomSfx(_sfxSplash, delay);
+    public void PlaySfxLaser(float delay) => PlayRandomSfx(_sfxLaser, delay);
+    public void PlaySfxSpaceShip(float delay) => PlayRandomSfx(_spaceShip, delay);
+    public void PlaySfxGameStart(float delay) => PlayRandomSfx(_gameStart, delay);
 
 
     private void PlayRandomSfx(AudioClip[] clips, float delay)

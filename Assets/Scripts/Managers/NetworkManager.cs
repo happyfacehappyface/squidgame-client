@@ -408,7 +408,7 @@ public record ResponsePacket(int signal, ResponsePacketData data);
 public abstract record RequestPacketData
 {
     public sealed record Ping() : RequestPacketData;
-    public sealed record EnterRoom() : RequestPacketData;
+    public sealed record EnterRoom(string playerName) : RequestPacketData;
     public sealed record LeaveRoom() : RequestPacketData;
     public sealed record StartGame() : RequestPacketData;
     public sealed record ReadyGame() : RequestPacketData;

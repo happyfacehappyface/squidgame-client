@@ -15,6 +15,7 @@ public class OutGameController : MonoBehaviour
     [SerializeField] private GameObject _waitForServer;
     [SerializeField] private TextMeshProUGUI _playerCountText;
 
+    [SerializeField] private TMP_InputField _playerNameInputField;
     [SerializeField] private Animator _canvasAnimator;
 
     // Start is called before the first frame update
@@ -55,8 +56,16 @@ public class OutGameController : MonoBehaviour
 
     public void RequestEnterRoom()
     {
-        _waitForServer.SetActive(true);
-        NetworkManager.Instance.SendMessageToServer(new RequestPacketData.EnterRoom());
+        if (_playerNameInputField.text.Length == 0)
+        {
+            _popupHandler.OpenErrorPopup("문제 발생!", "플레이어 이름을 입력해주세요!");
+            return;
+        }
+        else
+        {
+            _waitForServer.SetActive(true);
+            NetworkManager.Instance.SendMessageToServer(new RequestPacketData.EnterRoom(_playerNameInputField.text));
+        }
     }
 
     public void RequestLeaveRoom()

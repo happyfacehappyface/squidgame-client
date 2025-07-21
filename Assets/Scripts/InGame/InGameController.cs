@@ -5,6 +5,8 @@ using UnityEngine.SceneManagement;
 
 public class InGameController : MonoBehaviour
 {
+
+    [SerializeField] private InGameDrawer _inGameDrawer;
     private int _myIndex;
     public int MyIndex => _myIndex;
     private string[] _playerNames;
@@ -44,6 +46,8 @@ public class InGameController : MonoBehaviour
 
         _currentSubGame = null;
 
+        _inGameDrawer.ManualStart(this);
+
         _isInititalized = true;
 
     }
@@ -81,9 +85,8 @@ public class InGameController : MonoBehaviour
         if (isSuccess)
         {
             Utils.Log("OnResponseSubGameEnded");
-            //_subGameEndedData = data;
-            //SceneManager.LoadScene("WaitingScene");
-            //SceneManager.sceneLoaded += OnWaitingSceneLoaded;
+
+            _inGameDrawer.OnSubGameEnded(data);
         }
     }
 
@@ -122,6 +125,8 @@ public class InGameController : MonoBehaviour
         {
             _dalgonaGameData = data;
 
+            _inGameDrawer.OnNewSubGameSceneLoaded();
+
             SceneManager.sceneLoaded += OnDalgonaSceneLoaded;
             SceneManager.LoadScene("DalgonaScene");
         }
@@ -141,6 +146,8 @@ public class InGameController : MonoBehaviour
         if (isSuccess)
         {
             _tugOfWarGameData = data;
+
+            _inGameDrawer.OnNewSubGameSceneLoaded();
 
             SceneManager.sceneLoaded += OnTugOfWarSceneLoaded;
             SceneManager.LoadScene("TugOfWarScene");
