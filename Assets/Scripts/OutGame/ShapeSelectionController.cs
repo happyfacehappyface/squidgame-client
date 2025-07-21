@@ -11,7 +11,9 @@ public class ShapeSelectionController : MonoBehaviour
     public Button triangleButton;
     public Button starButton;
     
-    private Dictionary<StrokePainter.DalgonaShapeType, int> shapeDifficulties;
+    [SerializeField] private DalgonaController dalgonaController;
+
+    private Dictionary<StrokePainter.DalgonaShapeType, int> shapeDifficulties = new Dictionary<StrokePainter.DalgonaShapeType, int>();
 
     void Start()
     {
@@ -22,6 +24,12 @@ public class ShapeSelectionController : MonoBehaviour
         starButton.onClick.AddListener(() => OnShapeSelected(StrokePainter.DalgonaShapeType.Star));
         
         UpdateButtonLabels();
+
+        if (dalgonaController == null)
+        {
+            // Find the DalgonaController in the scene if not assigned
+            dalgonaController = FindObjectOfType<DalgonaController>();
+        }
     }
 
     private void AssignRandomDifficulties()
@@ -38,17 +46,13 @@ public class ShapeSelectionController : MonoBehaviour
 
     private void OnShapeSelected(StrokePainter.DalgonaShapeType shape)
     {
-        if (GameManager.Instance != null)
+        if (dalgonaController != null)
         {
-            GameManager.Instance.selectedShape = shape;
-            GameManager.Instance.selectedDifficulty = shapeDifficulties[shape];
-            
-            Debug.Log($"선택: {shape}, 난이도: {GameManager.Instance.selectedDifficulty}. 달고나 게임을 시작합니다...");
-            GameManager.Instance.ChangeState(GameManager.GameState.DalgonaPlay);
+            dalgonaController.OnShapeSelected(shape, shapeDifficulties[shape]);
         }
         else
         {
-            Debug.LogError("GameManager를 찾을 수 없습니다!");
+            Debug.LogError("DalgonaController가 연결되지 않았습니다!");
         }
     }
 

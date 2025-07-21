@@ -7,36 +7,59 @@ using System.Collections.Generic; // Added for List
 public class StrokePainterEditor : Editor
 {
     private StrokePainter painter;
+    
+    // Match the new structure of StrokePainter.cs
     private SerializedProperty shapeToGenerateProp;
     private SerializedProperty shapeSizeProp;
     private SerializedProperty difficultyLevelProp;
     private SerializedProperty customShapeProfileProp;
+    
     private SerializedProperty toleranceProp;
     private SerializedProperty completionPercentageProp;
+    
+    private SerializedProperty dalgonaControllerProp;
+    private SerializedProperty strokePrefabProp;
+    private SerializedProperty dalgonaShapeContainerProp;
+    private SerializedProperty dalgonaSegmentPrefabProp;
+    private SerializedProperty toleranceVisualizerContainerProp;
+    private SerializedProperty failedMaterialProp;
     private SerializedProperty toleranceMaterialProp;
-    private SerializedProperty timerTextProp;
     
     private int selectedPathIndex = -1;
 
     private void OnEnable()
     {
         painter = (StrokePainter)target;
+        
+        // Find all the new and existing properties
         shapeToGenerateProp = serializedObject.FindProperty("shapeToGenerate");
         shapeSizeProp = serializedObject.FindProperty("shapeSize");
         difficultyLevelProp = serializedObject.FindProperty("difficultyLevel");
         customShapeProfileProp = serializedObject.FindProperty("customShapeProfile");
+        
         toleranceProp = serializedObject.FindProperty("tolerance");
         completionPercentageProp = serializedObject.FindProperty("completionPercentage");
+
+        dalgonaControllerProp = serializedObject.FindProperty("dalgonaController");
+        strokePrefabProp = serializedObject.FindProperty("strokePrefab");
+        dalgonaShapeContainerProp = serializedObject.FindProperty("dalgonaShapeContainer");
+        dalgonaSegmentPrefabProp = serializedObject.FindProperty("dalgonaSegmentPrefab");
+        toleranceVisualizerContainerProp = serializedObject.FindProperty("toleranceVisualizerContainer");
+        failedMaterialProp = serializedObject.FindProperty("failedMaterial");
         toleranceMaterialProp = serializedObject.FindProperty("toleranceMaterial");
-        timerTextProp = serializedObject.FindProperty("timerText");
     }
 
     public override void OnInspectorGUI()
     {
         serializedObject.Update();
 
-        EditorGUILayout.PropertyField(shapeToGenerateProp);
+        // Group properties for better organization
+        EditorGUILayout.LabelField("Game Control", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(dalgonaControllerProp);
 
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Shape & Difficulty", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(shapeToGenerateProp);
         StrokePainter.DalgonaShapeType shapeType = (StrokePainter.DalgonaShapeType)shapeToGenerateProp.enumValueIndex;
 
         if (shapeType == StrokePainter.DalgonaShapeType.CustomFromProfile)
@@ -51,10 +74,6 @@ public class StrokePainterEditor : Editor
         }
         
         EditorGUILayout.Space();
-        EditorGUILayout.LabelField("UI", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(timerTextProp);
-
-        EditorGUILayout.Space();
         EditorGUILayout.LabelField("Game Rules", EditorStyles.boldLabel);
 
         bool starLevel2 = (shapeType == StrokePainter.DalgonaShapeType.Star && difficultyLevelProp.intValue == 2);
@@ -62,36 +81,34 @@ public class StrokePainterEditor : Editor
 
         // -- Tolerance Field --
         EditorGUI.BeginDisabledGroup(starLevel3);
-        if (starLevel3)
-        {
-            EditorGUILayout.FloatField(toleranceProp.displayName, 0.17f);
-        }
-        else
-        {
-            EditorGUILayout.PropertyField(toleranceProp);
-        }
+        EditorGUILayout.PropertyField(toleranceProp, new GUIContent(starLevel3 ? "Tolerance (Fixed)" : "Tolerance"));
         EditorGUI.EndDisabledGroup();
         if (starLevel3)
         {
+            toleranceProp.floatValue = 0.17f;
             EditorGUILayout.HelpBox("Tolerance is fixed to 0.17 for this level (Starbucks Logo).", MessageType.Info);
         }
 
         // -- Completion Percentage Field --
         EditorGUI.BeginDisabledGroup(starLevel2);
-        if (starLevel2)
-        {
-            EditorGUILayout.FloatField(completionPercentageProp.displayName, 0.91f);
-        }
-        else
-        {
-            EditorGUILayout.PropertyField(completionPercentageProp);
-        }
+        EditorGUILayout.PropertyField(completionPercentageProp, new GUIContent(starLevel2 ? "Completion % (Fixed)" : "Completion %"));
         EditorGUI.EndDisabledGroup();
         if (starLevel2)
         {
+            completionPercentageProp.floatValue = 0.91f;
             EditorGUILayout.HelpBox("Completion Percentage is fixed to 0.91 for this level (Shooting Star).", MessageType.Info);
         }
 
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Setup (Prefabs & Containers)", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(strokePrefabProp);
+        EditorGUILayout.PropertyField(dalgonaShapeContainerProp);
+        EditorGUILayout.PropertyField(dalgonaSegmentPrefabProp);
+        EditorGUILayout.PropertyField(toleranceVisualizerContainerProp);
+
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Visuals", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(failedMaterialProp);
         EditorGUILayout.PropertyField(toleranceMaterialProp);
 
         serializedObject.ApplyModifiedProperties();
