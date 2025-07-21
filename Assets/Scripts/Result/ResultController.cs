@@ -45,8 +45,18 @@ public class ResultController : MonoBehaviour
             _title.text = "아쉽네요!";
         }
 
-        _winnerPlayer.ManualStart(_winnerIndex, true);
-        _winnerName.text = _inGameController.PlayerNames[_winnerIndex];
+        if (_winnerIndex == -1)
+        {
+            _winnerPlayer.gameObject.SetActive(false);
+            _winnerName.text = "승자 없음";
+        }
+        else
+        {
+            _winnerPlayer.ManualStart(_winnerIndex, true);
+            _winnerName.text = _inGameController.PlayerNames[_winnerIndex];
+        }
+
+        
 
         _animator.SetTrigger("Show");
     }

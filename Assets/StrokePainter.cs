@@ -137,14 +137,14 @@ public class StrokePainter : MonoBehaviour
         if (isGameOver || isGameWon) return;
         isGameOver = true;
         if(failedMaterial != null && currentStrokeRenderer != null) currentStrokeRenderer.material = failedMaterial;
-        if (dalgonaController != null) dalgonaController.OnClickDalgonaResultFalse();
+        if (dalgonaController != null) dalgonaController.OnFail();
     }
 
     private void TriggerGameWon()
     {
         if (isGameOver || isGameWon) return;
         isGameWon = true;
-        if (dalgonaController != null) dalgonaController.OnClickDalgonaResultTrue();
+        if (dalgonaController != null) dalgonaController.OnSuccess();
     }
     
     // ... The rest of the file contains all the helper methods for drawing shapes ...

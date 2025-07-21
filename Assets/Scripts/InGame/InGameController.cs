@@ -116,6 +116,7 @@ public class InGameController : MonoBehaviour
     {
         SceneManager.sceneLoaded -= OnResultSceneLoaded;
         ResultController resultController = FindObjectOfType<ResultController>();
+        _currentSubGame = null;
         resultController.ManualStart(this, _gameEndedData);
     }
 
