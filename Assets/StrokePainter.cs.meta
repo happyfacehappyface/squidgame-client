@@ -3,7 +3,14 @@ guid: f66638629453ff249988c0f3bd23d723
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - strokePrefab: {instanceID: 0}
+  - dalgonaShapeContainer: {instanceID: 0}
+  - dalgonaSegmentPrefab: {instanceID: 0}
+  - customShapeProfile: {instanceID: 0}
+  - failedMaterial: {fileID: 2100000, guid: 6aecce92133d9cc49a7a79d8877eac4f, type: 2}
+  - toleranceMaterial: {fileID: 2100000, guid: bb979a9f9ede884499545d00c797155c, type: 2}
+  - toleranceVisualizerContainer: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
