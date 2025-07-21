@@ -43,6 +43,7 @@ public class ResultController : MonoBehaviour
 
     public void OnClickReturnToOutGameButton()
     {
+        _inGameController.DestroyInGameController();
         SceneManager.LoadScene("OutGameScene");
     }
 }
