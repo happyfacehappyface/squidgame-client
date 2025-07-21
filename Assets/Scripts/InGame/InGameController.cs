@@ -118,6 +118,7 @@ public class InGameController : MonoBehaviour
         ResultController resultController = FindObjectOfType<ResultController>();
         _currentSubGame = null;
         resultController.ManualStart(this, _gameEndedData);
+        _inGameDrawer.OnNewSubGameSceneLoaded();
     }
 
     public void OnResponseDalgonaGameStarted(bool isSuccess, ResponsePacketData.DalgonaGameStarted data)

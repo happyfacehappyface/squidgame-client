@@ -38,7 +38,7 @@ public class NetworkManager : MonoBehaviour
 
 
         #if UNITY_WEBGL && !UNITY_EDITOR
-        await ConnectToServer("/ws");
+        await ConnectToServer("/squidgame/ws");
         #else
         await ConnectToServer("ws://localhost:8082/ws");
         #endif

@@ -19,12 +19,12 @@ public class InGameDrawer : MonoBehaviour
     public void OnSubGameEnded(ResponsePacketData.SubGameEnded data)
     {
         UpdateSurvivePlayers(data);
-        _canvasAnimator.SetTrigger("SurvivePlayers");
+        _canvasAnimator.SetBool("Open", true);
     }
 
     public void OnNewSubGameSceneLoaded()
     {
-        _canvasAnimator.SetTrigger("Nothing");
+        _canvasAnimator.SetBool("Open", false);
     }
 
     private void UpdateSurvivePlayers(ResponsePacketData.SubGameEnded data)
