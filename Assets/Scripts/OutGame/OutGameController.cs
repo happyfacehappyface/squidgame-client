@@ -12,11 +12,10 @@ public class OutGameController : MonoBehaviour
     [SerializeField] private OutGamePopupHandler _popupHandler;
 
     [SerializeField] private GameObject _inGameControllerPrefab;
-
-    [SerializeField] private GameObject _tabTitle;
-    [SerializeField] private GameObject _tabInRoom;
     [SerializeField] private GameObject _waitForServer;
     [SerializeField] private TextMeshProUGUI _playerCountText;
+
+    [SerializeField] private Animator _canvasAnimator;
 
     // Start is called before the first frame update
     void Start()
@@ -51,25 +50,7 @@ public class OutGameController : MonoBehaviour
     private void ManualStart()
     {
         _popupHandler.ManualStart(this);
-        OpenTabTitle();
-    }
-
-    private void CloseAllTab()
-    {
-        _tabTitle.SetActive(false);
-        _tabInRoom.SetActive(false);
-    }
-
-    private void OpenTabTitle()
-    {
-        CloseAllTab();
-        _tabTitle.SetActive(true);
-    }
-
-    private void OpenTabInRoom()
-    {
-        CloseAllTab();
-        _tabInRoom.SetActive(true);
+        
     }
 
     public void RequestEnterRoom()
@@ -95,7 +76,7 @@ public class OutGameController : MonoBehaviour
     {
         if (isSuccess)
         {
-            OpenTabInRoom();
+            _canvasAnimator.SetTrigger("InRoom");
         }
         else
         {
@@ -109,7 +90,7 @@ public class OutGameController : MonoBehaviour
     {
         if (isSuccess)
         {
-            OpenTabTitle();
+            _canvasAnimator.SetTrigger("Title");
         }
         else
         {
@@ -123,7 +104,7 @@ public class OutGameController : MonoBehaviour
     {
         if (isSuccess)
         {
-            _playerCountText.text = data.playerCount.ToString();
+            _playerCountText.text = $"참가자 수: {data.playerCount}";
         }
     }
 

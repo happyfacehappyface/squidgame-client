@@ -34,6 +34,7 @@ public class OutGamePopupHandler : MonoBehaviour
     public void OpenErrorPopup(string title, string description)
     {
         CloseAllPopups();
+        _popUpBlocker.SetActive(true);
         _errorPopup.SetActive(true);
 
         _errorTitle.text = title;
