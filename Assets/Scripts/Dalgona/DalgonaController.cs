@@ -23,7 +23,7 @@ public class DalgonaController : MonoBehaviour, ISubGameController
         NetworkManager.Instance.SendMessageToServer(new RequestPacketData.ReadySubGame());
     }
 
-    public void OnSubGameStarted(InGameController inGameController)
+    public void OnSubGameStarted()
     {
         Debug.Log("Dalgona Game: OnSubGameStarted");
         _isStarted = true;

@@ -9,12 +9,13 @@ public class OutGameController : MonoBehaviour
 {
     private ResponsePacketData.StartGame _startGameData;
 
-    [SerializeField] private GameObject _inGameControllerPrefab;
+    [SerializeField] private OutGamePopupHandler _popupHandler;
 
-    [SerializeField] private GameObject _tabTitle;
-    [SerializeField] private GameObject _tabInRoom;
+    [SerializeField] private GameObject _inGameControllerPrefab;
     [SerializeField] private GameObject _waitForServer;
     [SerializeField] private TextMeshProUGUI _playerCountText;
+
+    [SerializeField] private Animator _canvasAnimator;
 
     // Start is called before the first frame update
     void Start()
@@ -30,40 +31,26 @@ public class OutGameController : MonoBehaviour
 
     public void OnClickEnterRoom()
     {
+        SoundManager.Instance.PlaySfxButtonClick(0.0f);
         RequestEnterRoom();
     }
 
     public void OnClickLeaveRoom()
     {
+        SoundManager.Instance.PlaySfxButtonClick(0.0f);
         RequestLeaveRoom();
     }
 
     public void OnClickStartGame()
     {
+        SoundManager.Instance.PlaySfxButtonClick(0.0f);
         RequestStartGame();
     }
 
     private void ManualStart()
     {
-        OpenTabTitle();
-    }
-
-    private void CloseAllTab()
-    {
-        _tabTitle.SetActive(false);
-        _tabInRoom.SetActive(false);
-    }
-
-    private void OpenTabTitle()
-    {
-        CloseAllTab();
-        _tabTitle.SetActive(true);
-    }
-
-    private void OpenTabInRoom()
-    {
-        CloseAllTab();
-        _tabInRoom.SetActive(true);
+        _popupHandler.ManualStart(this);
+        
     }
 
     public void RequestEnterRoom()
@@ -89,11 +76,11 @@ public class OutGameController : MonoBehaviour
     {
         if (isSuccess)
         {
-            OpenTabInRoom();
+            _canvasAnimator.SetTrigger("InRoom");
         }
         else
         {
-            Debug.Log("방 입장 실패");
+            _popupHandler.OpenErrorPopup("문제 발생!", "게임이 이미 시작되었습니다.\n 다음 게임을 기다려주세요!");
         }
 
         _waitForServer.SetActive(false);
@@ -103,7 +90,7 @@ public class OutGameController : MonoBehaviour
     {
         if (isSuccess)
         {
-            OpenTabTitle();
+            _canvasAnimator.SetTrigger("Title");
         }
         else
         {
@@ -117,7 +104,7 @@ public class OutGameController : MonoBehaviour
     {
         if (isSuccess)
         {
-            _playerCountText.text = data.playerCount.ToString();
+            _playerCountText.text = $"참가자 수: {data.playerCount}";
         }
     }
 

@@ -398,7 +398,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _playerResultItemPrefab: {fileID: 7014489014597326521, guid: 39d47ab3e66b13d45b86d3878a141480, type: 3}
-  _playerResultItemParent: {fileID: 9044309047968839184, guid: 39d47ab3e66b13d45b86d3878a141480, type: 3}
+  _playerResultItemParent: {fileID: 1757989046}
 --- !u!1 &1757989045
 GameObject:
   m_ObjectHideFlags: 0

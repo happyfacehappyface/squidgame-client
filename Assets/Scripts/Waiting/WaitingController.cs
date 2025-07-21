@@ -5,16 +5,21 @@ using UnityEngine;
 public class WaitingController : MonoBehaviour, ISubGameController
 {
 
-
     private InGameController _inGameController;
+
 
     [SerializeField] private GameObject _playerResultItemPrefab;
     [SerializeField] private Transform _playerResultItemParent;
 
 
-    public void OnSubGameStarted(InGameController inGameController)
+    public void ManualStart(InGameController inGameController)
     {
         _inGameController = inGameController;
+    }
+
+    public void OnSubGameStarted()
+    {
+        
     }
 
     public void ManualUpdate()
