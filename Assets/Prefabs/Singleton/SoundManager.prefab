@@ -69,10 +69,24 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 22f4e61a3b2e81c4ca613975a69427c6, type: 3}
   _sfxLaser:
   - {fileID: 8300000, guid: 4bebdaaa4a9b07b4f916f947b7184fb9, type: 3}
-  _spaceShip:
+  _sfxSpaceShip:
   - {fileID: 8300000, guid: 99c2017965ab4e44b888ff2a4df67674, type: 3}
-  _gameStart:
+  _sfxGameStart:
   - {fileID: 8300000, guid: 10b96c6fffad114489bf9661b784757c, type: 3}
+  _sfxWind:
+  - {fileID: 8300000, guid: ba79ca1eb502de946b0f9d5088d81e84, type: 3}
+  _sfxRope:
+  - {fileID: 8300000, guid: f6f30b8af2b980643ab554d7cceac2a6, type: 3}
+  _sfxBurn:
+  - {fileID: 8300000, guid: 65a4d59fe68f0264da0738c8ae700dc3, type: 3}
+  _sfxSlash:
+  - {fileID: 8300000, guid: a01a50fa0882c634db25f90a498030e4, type: 3}
+  _sfxSubGameStart:
+  - {fileID: 8300000, guid: 8cb1c4d6c1d84f742a31a407ff1b7c04, type: 3}
+  _sfxAlert:
+  - {fileID: 8300000, guid: 557a291513854924bb7fe869ea8f8161, type: 3}
+  _bgmOutGame:
+  - {fileID: 8300000, guid: 33dc448fbe3b27043b0d8bec58a3ee71, type: 3}
 --- !u!82 &4254529009597376877
 AudioSource:
   m_ObjectHideFlags: 0

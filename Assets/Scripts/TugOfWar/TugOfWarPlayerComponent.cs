@@ -14,11 +14,11 @@ public class TugOfWarPlayerComponent : MonoBehaviour
 
 
 
-    public void ManualStart(int playerIndex, string playerName, bool isMe)
+    public void ManualStart(int playerIndex, string playerName, bool isMe, bool isLeft)
     {
         _isMeIndicator.SetActive(isMe);
         _nameText.text = playerName;
-        _playerComponent.ManualStart(playerIndex);
+        _playerComponent.ManualStart(playerIndex, isLeft);
     }
 
     public void OnCountDownStart()

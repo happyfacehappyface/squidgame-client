@@ -21,9 +21,19 @@ public class SoundManager : MonoBehaviour
     [SerializeField] private AudioClip[] _sfxSplash;
 
     [SerializeField] private AudioClip[] _sfxLaser;
-    [SerializeField] private AudioClip[] _spaceShip;
-    [SerializeField] private AudioClip[] _gameStart;
+    [SerializeField] private AudioClip[] _sfxSpaceShip;
+    [SerializeField] private AudioClip[] _sfxGameStart;
 
+    [SerializeField] private AudioClip[] _sfxWind;
+    [SerializeField] private AudioClip[] _sfxRope;
+    [SerializeField] private AudioClip[] _sfxBurn;
+    [SerializeField] private AudioClip[] _sfxSlash;
+
+    [SerializeField] private AudioClip[] _sfxSubGameStart;
+    [SerializeField] private AudioClip[] _sfxAlert;
+
+
+    [SerializeField] private AudioClip[] _bgmOutGame;
 
     private bool _isReady = false;
 
@@ -57,8 +67,16 @@ public class SoundManager : MonoBehaviour
     public void PlaySfxDoor(float delay) => PlayRandomSfx(_sfxDoor, delay);
     public void PlaySfxSplash(float delay) => PlayRandomSfx(_sfxSplash, delay);
     public void PlaySfxLaser(float delay) => PlayRandomSfx(_sfxLaser, delay);
-    public void PlaySfxSpaceShip(float delay) => PlayRandomSfx(_spaceShip, delay);
-    public void PlaySfxGameStart(float delay) => PlayRandomSfx(_gameStart, delay);
+    public void PlaySfxSpaceShip(float delay) => PlayRandomSfx(_sfxSpaceShip, delay);
+    public void PlaySfxGameStart(float delay) => PlayRandomSfx(_sfxGameStart, delay);
+    public void PlaySfxWind(float delay) => PlayRandomSfx(_sfxWind, delay);
+    public void PlaySfxRope(float delay) => PlayRandomSfx(_sfxRope, delay);
+    public void PlaySfxBurn(float delay) => PlayRandomSfx(_sfxBurn, delay);
+    public void PlaySfxSlash(float delay) => PlayRandomSfx(_sfxSlash, delay);
+    public void PlaySfxSubGameStart(float delay) => PlayRandomSfx(_sfxSubGameStart, delay);
+    public void PlaySfxAlert(float delay) => PlayRandomSfx(_sfxAlert, delay);
+
+    public void PlayBgmOutGame(bool loop = true) => PlayRandomBgm(_bgmOutGame, loop);
 
 
     private void PlayRandomSfx(AudioClip[] clips, float delay)
@@ -89,5 +107,27 @@ public class SoundManager : MonoBehaviour
     {
         yield return new WaitForSeconds(delay);
         PlaySfx(clip);
+    }
+
+
+    public void PlayBgm(AudioClip clip, bool loop = true)
+    {
+        _bgmSource.clip = clip;
+        _bgmSource.loop = loop;
+        _bgmSource.Play();
+    }
+
+    public void PlayRandomBgm(AudioClip[] clips, bool loop = true)
+    {
+        if (clips != null && clips.Length > 0)
+        {
+            int randomIndex = Random.Range(0, clips.Length);
+            PlayBgm(clips[randomIndex], loop);
+        }
+    }
+
+    public void StopBgm()
+    {
+        _bgmSource.Stop();
     }
 }

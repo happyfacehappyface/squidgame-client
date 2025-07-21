@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,9 +12,17 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
     [SerializeField] private Transform _leftPlayerParent;
     [SerializeField] private Transform _rightPlayerParent;
     [SerializeField] private Transform _ropeAndPlayer;
-    [SerializeField] private Transform _ropeTransform;
-    [SerializeField] private Image _redTeamSlider;
-    [SerializeField] private Image _blueTeamSlider;
+    [SerializeField] private Transform _leftRopeTransform;
+    [SerializeField] private Transform _rightRopeTransform;
+    [SerializeField] private Image _leftTeamSlider;
+    [SerializeField] private Image _rightTeamSlider;
+
+    [SerializeField] private GameObject _handPrefab;
+    [SerializeField] private Transform _leftHandParent;
+    [SerializeField] private Transform _rightHandParent;
+
+    [SerializeField] private TextMeshProUGUI _noticeText;
+    [SerializeField] private Animator _spaceBarAnimator;
 
     private InGameController _inGameController;
 
@@ -30,6 +39,9 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
     List<TugOfWarPlayerComponent> _leftTeamPlayerComponents = new List<TugOfWarPlayerComponent>();
     List<TugOfWarPlayerComponent> _rightTeamPlayerComponents = new List<TugOfWarPlayerComponent>();
 
+    List<GameObject> _leftHands = new List<GameObject>();
+    List<GameObject> _rightHands = new List<GameObject>();
+
     private TugOfWarGameState _gameState;
     
 
@@ -39,8 +51,11 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
         _inGameController = inGameController;
         _gameState = TugOfWarGameState.Waiting;
         _tugOfWarGameData = data;
-        
+        SoundManager.Instance.PlaySfxSubGameStart(0.0f);
         CreatePlayerCharacters();
+
+        _noticeText.text = "";
+
 
         NetworkManager.Instance.SendMessageToServer(new RequestPacketData.ReadySubGame());
     }
@@ -52,6 +67,8 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
         _pressCount = 0;
         _deltaPressCountMovingAverage = 0.0f;
         _keepSendingPressCountToServerCoroutine = StartCoroutine(CO_KeepSendingPressCountToServer());
+
+        _noticeText.text = "스페이스 바를 연타하세요!";
 
         foreach (var player in _leftTeamPlayerComponents)
         {
@@ -80,9 +97,23 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
         }
     }
 
+    private void ClearHands()
+    {
+        foreach (Transform child in _leftHandParent.transform)
+        {
+            Destroy(child.gameObject);
+        }
+
+        foreach (Transform child in _rightHandParent.transform)
+        {
+            Destroy(child.gameObject);
+        }
+    }
+
     private void CreatePlayerCharacters()
     {
         ClearPlayerCharacters();
+        ClearHands();
 
         var leftTeamPlayerCharacterCount = Mathf.Min(_tugOfWarGameData.leftTeamPlayerIndex.Length, 10);
         var rightTeamPlayerCharacterCount = Mathf.Min(_tugOfWarGameData.rightTeamPlayerIndex.Length, 10);
@@ -118,19 +149,27 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
         {
             var player = Instantiate(_playerPrefab, _leftPlayerParent).GetComponent<TugOfWarPlayerComponent>();
             _leftTeamPlayerComponents.Add(player);
-            player.ManualStart(reorderedLeftTeamPlayerIndex[i], _inGameController.PlayerNames[reorderedLeftTeamPlayerIndex[i]], reorderedLeftTeamPlayerIndex[i] == _inGameController.MyIndex);
+            player.ManualStart(reorderedLeftTeamPlayerIndex[i], _inGameController.PlayerNames[reorderedLeftTeamPlayerIndex[i]], reorderedLeftTeamPlayerIndex[i] == _inGameController.MyIndex, true);
             player.transform.localPosition = new Vector3(i * (- 200.0f), 0.0f, 0.0f);
+
+            var hand = Instantiate(_handPrefab, _leftHandParent);
+            _leftHands.Add(hand);
+            hand.transform.localPosition = new Vector3(i * (- 200.0f), 0.0f, 0.0f);
+            hand.transform.localScale = new Vector3(1, 1, 1);
         }
 
         for (int i = 0; i < rightTeamPlayerCharacterCount; i++)
         {
             var player = Instantiate(_playerPrefab, _rightPlayerParent).GetComponent<TugOfWarPlayerComponent>();
             _rightTeamPlayerComponents.Add(player);
-            player.ManualStart(reorderedRightTeamPlayerIndex[i], _inGameController.PlayerNames[reorderedRightTeamPlayerIndex[i]], reorderedRightTeamPlayerIndex[i] == _inGameController.MyIndex);
-            player.transform.localPosition = new Vector3(i * (- 200.0f), 0.0f, 0.0f);
+            player.ManualStart(reorderedRightTeamPlayerIndex[i], _inGameController.PlayerNames[reorderedRightTeamPlayerIndex[i]], reorderedRightTeamPlayerIndex[i] == _inGameController.MyIndex, false);
+            player.transform.localPosition = new Vector3(i * (+ 200.0f), 0.0f, 0.0f);
+
+            var hand = Instantiate(_handPrefab, _rightHandParent);
+            _rightHands.Add(hand);
+            hand.transform.localPosition = new Vector3(i * (+ 200.0f), 0.0f, 0.0f);
+            hand.transform.localScale = new Vector3(-1, 1, 1);
         }
-
-
 
 
 
@@ -145,7 +184,7 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
         }
 
         HandleInput();
-        float smoothingSpeed = 1.0f; // 초당 변화 속도 (값이 클수록 빠르게 변화)
+        float smoothingSpeed = 1.0f;
         float deltaTimeFactor = Mathf.Clamp01(smoothingSpeed * Time.deltaTime);
         _deltaPressCountMovingAverage = Mathf.Lerp(_deltaPressCountMovingAverage, _deltaPressCount, deltaTimeFactor);
 
@@ -155,18 +194,20 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
 
     private void UpdateViewUsingDeltaPressCount()
     {
-        float clampedDeltaMovingAverage = Mathf.Clamp(_deltaPressCountMovingAverage / 50.0f, -1.0f, 1.0f);
+        float sigmoidDeltaMovingAverage = 2.0f / (1.0f + Mathf.Exp(-0.3f * _deltaPressCountMovingAverage)) - 1.0f;
+        float clampedDeltaMovingAverage = Mathf.Clamp(sigmoidDeltaMovingAverage, -1.0f, 1.0f);
 
-        _ropeAndPlayer.transform.localPosition = new Vector3(clampedDeltaMovingAverage * (- 100.0f), 0.0f, 0.0f);
+        _ropeAndPlayer.transform.localPosition = new Vector3(clampedDeltaMovingAverage * (- 300.0f), 0.0f, 0.0f);
 
-        _redTeamSlider.fillAmount = Mathf.Clamp01(0.5f + (clampedDeltaMovingAverage / 2.0f));
-        _blueTeamSlider.fillAmount = Mathf.Clamp01(0.5f - (clampedDeltaMovingAverage / 2.0f));
+        _leftTeamSlider.fillAmount = Mathf.Clamp01(0.5f + (clampedDeltaMovingAverage / 2.0f));
+        _rightTeamSlider.fillAmount = Mathf.Clamp01(0.5f - (clampedDeltaMovingAverage / 2.0f));
     }
 
     public void HandleInput()
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
+            _spaceBarAnimator.SetTrigger("Press");
             _pressCount++;
         }
     }
@@ -192,12 +233,15 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
     {
         if (isSuccess)
         {
+            SoundManager.Instance.PlaySfxRope(0.0f);
             _deltaPressCount = data.deltaPressCount;
         }
     }
 
     public void OnResponseTugOfWarGameResult(bool isSuccess, ResponsePacketData.TugOfWarGameResult data)
     {
+        _spaceBarAnimator.SetTrigger("Hide");
+
         if (isSuccess)
         {
             if (_keepSendingPressCountToServerCoroutine != null)
@@ -213,12 +257,33 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
 
             _gameState = TugOfWarGameState.Ended;
 
+            SoundManager.Instance.PlaySfxSlash(0.0f);
+            SoundManager.Instance.PlaySfxWind(0.0f);
+
             StartCoroutine(CO_ShowTugOfWarResultAnimation(data.isLeftWin));
+
+            foreach (var hand in _leftHands)
+            {
+                hand.SetActive(false);
+            }
+
+            foreach (var hand in _rightHands)
+            {
+                hand.SetActive(false);
+            }
         }
     }
 
     IEnumerator CO_ShowTugOfWarResultAnimation(bool isLeftWin)
     {
+        if (isLeftWin)
+        {
+            _noticeText.text = "왼쪽 팀 승리!";
+        }
+        else
+        {
+            _noticeText.text = "오른쪽 팀 승리!";
+        }
 
         foreach (var player in _leftTeamPlayerComponents)
         {
@@ -279,7 +344,19 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
                 
             }
 
-            _ropeTransform.transform.localPosition = new Vector3((isLeftWin ? -1.0f : 1.0f) * progress * 300.0f, 0.0f, 0.0f);
+
+            float ropeHeight = 10f;
+            if (isLeftWin)
+            {
+                _leftRopeTransform.transform.localPosition = new Vector3(-600f * progress, -ropeHeight * progress, 0.0f);
+                _rightRopeTransform.transform.localPosition = new Vector3(100f * progress, -ropeHeight * progress, 0.0f);
+            }
+            else
+            {
+                _leftRopeTransform.transform.localPosition = new Vector3(-100f * progress, -ropeHeight * progress, 0.0f);
+                _rightRopeTransform.transform.localPosition = new Vector3(600f * progress, -ropeHeight * progress, 0.0f);
+            }
+
 
             yield return null;
         }

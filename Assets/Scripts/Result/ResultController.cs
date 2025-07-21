@@ -28,14 +28,24 @@ public class ResultController : MonoBehaviour
 
         if (_winnerIndex == _inGameController.MyIndex)
         {
+            SoundManager.Instance.PlaySfxGameWin(0.0f);
             _title.text = "축하합니다!";
         }
         else
         {
+            if (_winnerIndex == -1)
+            {
+                SoundManager.Instance.PlaySfxGameDraw(0.0f);
+            }
+            else
+            {
+                SoundManager.Instance.PlaySfxGameLose(0.0f);
+            }
+
             _title.text = "아쉽네요!";
         }
 
-        _winnerPlayer.ManualStart(_winnerIndex);
+        _winnerPlayer.ManualStart(_winnerIndex, true);
         _winnerName.text = _inGameController.PlayerNames[_winnerIndex];
 
         _animator.SetTrigger("Show");
@@ -43,6 +53,7 @@ public class ResultController : MonoBehaviour
 
     public void OnClickReturnToOutGameButton()
     {
+        SoundManager.Instance.PlaySfxButtonClick(0.0f);
         _inGameController.DestroyInGameController();
         SceneManager.LoadScene("OutGameScene");
     }

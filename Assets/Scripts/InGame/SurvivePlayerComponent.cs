@@ -12,7 +12,7 @@ public class SurvivePlayerComponent : MonoBehaviour
 
     public void UpdateSurvivePlayer(int playerIndex, string playerName, bool isMe)
     {
-        _playerComponent.ManualStart(playerIndex);
+        _playerComponent.ManualStart(playerIndex, true);
         _playerName.text = playerName;
         _isMeIndicator.SetActive(isMe);
     }

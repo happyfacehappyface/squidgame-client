@@ -125,8 +125,6 @@ public class InGameController : MonoBehaviour
         {
             _dalgonaGameData = data;
 
-            _inGameDrawer.OnNewSubGameSceneLoaded();
-
             SceneManager.sceneLoaded += OnDalgonaSceneLoaded;
             SceneManager.LoadScene("DalgonaScene");
         }
@@ -139,6 +137,7 @@ public class InGameController : MonoBehaviour
         DalgonaController dalgonaController = FindObjectOfType<DalgonaController>();
         _currentSubGame = dalgonaController;
         dalgonaController.ManualStart(_dalgonaGameData);
+        _inGameDrawer.OnNewSubGameSceneLoaded();
     }
 
     public void OnResponseTugOfWarGameStarted(bool isSuccess, ResponsePacketData.TugOfWarGameStarted data)
@@ -146,8 +145,6 @@ public class InGameController : MonoBehaviour
         if (isSuccess)
         {
             _tugOfWarGameData = data;
-
-            _inGameDrawer.OnNewSubGameSceneLoaded();
 
             SceneManager.sceneLoaded += OnTugOfWarSceneLoaded;
             SceneManager.LoadScene("TugOfWarScene");
@@ -160,6 +157,7 @@ public class InGameController : MonoBehaviour
         TugOfWarController tugOfWarController = FindObjectOfType<TugOfWarController>();
         _currentSubGame = tugOfWarController;
         tugOfWarController.ManualStart(this, _tugOfWarGameData);
+        _inGameDrawer.OnNewSubGameSceneLoaded();
     }
 
 
