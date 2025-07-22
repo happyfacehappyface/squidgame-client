@@ -124,19 +124,20 @@ public class DalgonaController : MonoBehaviour, ISubGameController
 
     public void OnSuccess()
     {
-        Debug.Log("Dalgona Game: OnSuccess");
+        Utils.Log("Dalgona Game: OnSuccess");
         NetworkManager.Instance.SendMessageToServer(new RequestPacketData.DalgonaGameResult(true));
     }
 
     public void OnFail()
     {
-        Debug.Log("Dalgona Game: OnFail");
+        Utils.Log("Dalgona Game: OnFail");
         if (_failureAnimator != null)
         {
             _failureAnimator.gameObject.SetActive(true);
             _failureAnimator.SetTrigger("Fail");
         }
         NetworkManager.Instance.SendMessageToServer(new RequestPacketData.DalgonaGameResult(false));
+        _inGameController.OnPlayerDeath();
     }
 
 }

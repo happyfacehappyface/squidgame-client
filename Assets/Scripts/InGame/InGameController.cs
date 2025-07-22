@@ -207,6 +207,11 @@ public class InGameController : MonoBehaviour
         Destroy(gameObject);
     }
 
+    public void OnPlayerDeath()
+    {
+        _inGameDrawer.SetDeathIndicatorTrue();
+    }
+
     
 
     

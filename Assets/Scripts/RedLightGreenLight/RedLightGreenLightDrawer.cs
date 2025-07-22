@@ -136,7 +136,7 @@ public class RedLightGreenLightDrawer : MonoBehaviour
             {
                 RedLightGreenLightPlayerComponent playerComponent = Instantiate(_playerPrefab, _playerParent).GetComponent<RedLightGreenLightPlayerComponent>();
                 _playerComponents[i] = playerComponent;
-                playerComponent.ManualStart(i, true);
+                playerComponent.ManualStart(i, i == _controller.MyIndex);
             }
         }
 

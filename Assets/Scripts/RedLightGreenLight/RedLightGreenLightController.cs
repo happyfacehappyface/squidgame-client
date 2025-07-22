@@ -82,11 +82,11 @@ public class RedLightGreenLightController : MonoBehaviour, ISubGameController
 
         if (Input.GetKey(KeyCode.Space))
         {
-            _myProgressVelocity = Mathf.Clamp(_myProgressVelocity + (Time.deltaTime * 0.1f), 0f, _velocityLimit);
+            _myProgressVelocity = Mathf.Clamp(_myProgressVelocity + (Time.deltaTime * 0.15f), 0f, _velocityLimit);
         }
         else
         {
-            _myProgressVelocity = Mathf.Clamp(_myProgressVelocity - (Time.deltaTime * 0.1f), 0f, _velocityLimit);
+            _myProgressVelocity = Mathf.Clamp(_myProgressVelocity - (Time.deltaTime * 0.2f), 0f, _velocityLimit);
         }
 
     }
@@ -130,7 +130,7 @@ public class RedLightGreenLightController : MonoBehaviour, ISubGameController
 
         if (CurrentLightState is LightState.Yellow yellow)
         {
-            if (_currentTime - yellow.StartTime > TimeSpan.FromSeconds(0.8f))
+            if (_currentTime - yellow.StartTime > TimeSpan.FromSeconds(1.0f))
             {
                 CurrentLightState = new LightState.Red();
             }
@@ -145,7 +145,7 @@ public class RedLightGreenLightController : MonoBehaviour, ISubGameController
         {
             if (PlayerIsPlaying[i])
             {
-                PlayerProgressMovingAverage[i] = Mathf.Lerp(PlayerProgressMovingAverage[i], PlayerProgress[i], Time.deltaTime);
+                PlayerProgressMovingAverage[i] = Mathf.Lerp(PlayerProgressMovingAverage[i], PlayerProgress[i], Time.deltaTime * 1.5f);
             }
         }
     }
@@ -173,6 +173,11 @@ public class RedLightGreenLightController : MonoBehaviour, ISubGameController
         {
             PlayerIsPlaying[data.playerIndex] = false;
             _drawer.OnResponsePlayerResult(data);
+
+            if (!data.isSuccess && (data.playerIndex == MyIndex))
+            {
+                _inGameController.OnPlayerDeath();
+            }
         }
     }
 
@@ -198,9 +203,17 @@ public class RedLightGreenLightController : MonoBehaviour, ISubGameController
             
             _drawer.OnResponseGameResult(data);
 
+
+            if (PlayerIsPlaying[MyIndex])
+            {
+                _inGameController.OnPlayerDeath();
+            }
+
             PlayerIsPlaying = Utils.CreateFill1D(PlayerCount, false);
             _isGameStarted = false;
             StopCoroutine(_keepSendMyPositionCoroutine);
+
+            
         }
     }
 
