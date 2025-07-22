@@ -60,6 +60,10 @@ public class OutGameController : MonoBehaviour
             _playerName = GenerateRandomPlayerName();
             _playerNameInputField.text = _playerName;
         }
+        else
+        {
+            _playerName = _playerNameInputField.text;
+        }
     }
 
     public void RequestEnterRoom()

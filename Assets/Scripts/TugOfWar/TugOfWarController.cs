@@ -334,6 +334,16 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
             {
                 hand.SetActive(false);
             }
+
+
+            if (!data.isLeftWin && _tugOfWarGameData.leftTeamPlayerIndex.Contains(_inGameController.MyIndex))
+            {
+                _inGameController.OnPlayerDeath();
+            }
+            else if (data.isLeftWin && _tugOfWarGameData.rightTeamPlayerIndex.Contains(_inGameController.MyIndex))
+            {
+                _inGameController.OnPlayerDeath();
+            }
         }
     }
 
