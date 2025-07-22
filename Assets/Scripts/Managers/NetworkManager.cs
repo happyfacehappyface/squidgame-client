@@ -245,6 +245,41 @@ public class NetworkManager : MonoBehaviour
             }
         },
 
+        {
+            typeof(ResponsePacketData.RedLightGreenLightGameStarted),
+            (isSuccess, data) => {
+                FindObjectOfType<InGameController>()?.OnResponseRedLightGreenLightGameStarted(isSuccess, (ResponsePacketData.RedLightGreenLightGameStarted)data);
+            }
+        },
+
+        {
+            typeof(ResponsePacketData.RedLightGreenLightLightChanged),
+            (isSuccess, data) => {
+                FindObjectOfType<RedLightGreenLightController>()?.OnResponseRedLightGreenLightLightChanged(isSuccess, (ResponsePacketData.RedLightGreenLightLightChanged)data);
+            }
+        },
+
+        {
+            typeof(ResponsePacketData.RedLightGreenLightPlayerResult),
+            (isSuccess, data) => {
+                FindObjectOfType<RedLightGreenLightController>()?.OnResponseRedLightGreenLightPlayerResult(isSuccess, (ResponsePacketData.RedLightGreenLightPlayerResult)data);
+            }
+        },
+
+        {
+            typeof(ResponsePacketData.RedLightGreenLightPlayerPosition),
+            (isSuccess, data) => {
+                FindObjectOfType<RedLightGreenLightController>()?.OnResponseRedLightGreenLightPlayerPosition(isSuccess, (ResponsePacketData.RedLightGreenLightPlayerPosition)data);
+            }
+        },
+
+        {
+            typeof(ResponsePacketData.RedLightGreenLightGameResult),
+            (isSuccess, data) => {
+                FindObjectOfType<RedLightGreenLightController>()?.OnResponseRedLightGreenLightGameResult(isSuccess, (ResponsePacketData.RedLightGreenLightGameResult)data);
+            }
+        },
+
 
     };
 
@@ -262,6 +297,9 @@ public class NetworkManager : MonoBehaviour
         { 2102, typeof(RequestPacketData.DalgonaGameResult) },
 
         { 2202, typeof(RequestPacketData.TugOfWarGamePressCount) },
+
+        { 2303, typeof(RequestPacketData.RedLightGreenLightPlayerResult) },
+        { 2304, typeof(RequestPacketData.RedLightGreenLightPlayerPosition) },
     };
 
     private static readonly Dictionary<int, Type> _responseSignalToType = new()
@@ -283,6 +321,12 @@ public class NetworkManager : MonoBehaviour
         { 2201, typeof(ResponsePacketData.TugOfWarGameStarted) },
         { 2202, typeof(ResponsePacketData.TugOfWarGamePressCount) },
         { 2203, typeof(ResponsePacketData.TugOfWarGameResult) },
+
+        { 2301, typeof(ResponsePacketData.RedLightGreenLightGameStarted) },
+        { 2302, typeof(ResponsePacketData.RedLightGreenLightLightChanged) },
+        { 2303, typeof(ResponsePacketData.RedLightGreenLightPlayerResult) },
+        { 2304, typeof(ResponsePacketData.RedLightGreenLightPlayerPosition) },
+        { 2305, typeof(ResponsePacketData.RedLightGreenLightGameResult) },
     };
 
     public static Type GetRequestTypeFromSignal(int signal)
@@ -418,6 +462,10 @@ public abstract record RequestPacketData
     public sealed record DalgonaGameResult(bool isSuccess) : RequestPacketData;
     
     public sealed record TugOfWarGamePressCount(int pressCount) : RequestPacketData;
+
+    public sealed record RedLightGreenLightPlayerResult(bool isSuccess) : RequestPacketData;
+    public sealed record RedLightGreenLightPlayerPosition(int progress) : RequestPacketData;
+
 }
 
 public abstract record ResponsePacketData
@@ -443,6 +491,14 @@ public abstract record ResponsePacketData
 
     public sealed record TugOfWarGamePressCount(int deltaPressCount) : ResponsePacketData;
     public sealed record TugOfWarGameResult(int deltaPressCount, bool isLeftWin) : ResponsePacketData;
+
+    public sealed record RedLightGreenLightGameStarted(int timeLimitMs, int[] playerIndices) : ResponsePacketData;
+    public sealed record RedLightGreenLightLightChanged(int playerIndex, bool redLightOn) : ResponsePacketData;
+    public sealed record RedLightGreenLightPlayerResult(int playerIndex, bool isSuccess) : ResponsePacketData;
+    public sealed record RedLightGreenLightPlayerPosition(int[] progress) : ResponsePacketData;
+    public sealed record RedLightGreenLightGameResult() : ResponsePacketData;
+
+
 
 }
 

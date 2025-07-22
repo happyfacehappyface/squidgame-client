@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -11,8 +12,8 @@ public class InGameController : MonoBehaviour
     public int MyIndex => _myIndex;
     private string[] _playerNames;
     public string[] PlayerNames => _playerNames;
-    private string[] _playerIsAlive;
-    public string[] PlayerIsAlive => _playerIsAlive;
+    private bool[] _playerIsAlive;
+    public bool[] PlayerIsAlive => _playerIsAlive;
     private int _playerCount;
     public int PlayerCount => _playerCount;
     private int _round;
@@ -28,6 +29,7 @@ public class InGameController : MonoBehaviour
     private ResponsePacketData.DalgonaGameStarted _dalgonaGameData;
     private ResponsePacketData.TugOfWarGameStarted _tugOfWarGameData;
     private ResponsePacketData.GameEnded _gameEndedData;
+    private ResponsePacketData.RedLightGreenLightGameStarted _redLightGreenLightGameData;
 
 
 
@@ -36,7 +38,9 @@ public class InGameController : MonoBehaviour
         _isGameEnded = false;
         _myIndex = startGameData.myIndex;
         _playerNames = startGameData.names;
-        _playerIsAlive = new string[_playerNames.Length];
+
+        _playerIsAlive = Utils.CreateFill1D(_playerNames.Length, true);
+
         _playerCount = _playerNames.Length;
         _round = 0;
         DontDestroyOnLoad(gameObject);
@@ -84,7 +88,10 @@ public class InGameController : MonoBehaviour
     {
         if (isSuccess)
         {
-            Utils.Log("OnResponseSubGameEnded");
+            for (int i = 0; i < _playerIsAlive.Length; i++)
+            {
+                _playerIsAlive[i] = data.survivePlayerIndices.Contains(i);
+            }
 
             _inGameDrawer.OnSubGameEnded(data);
         }
@@ -142,6 +149,25 @@ public class InGameController : MonoBehaviour
         _inGameDrawer.OnNewSubGameSceneLoaded();
     }
 
+    public void OnResponseRedLightGreenLightGameStarted(bool isSuccess, ResponsePacketData.RedLightGreenLightGameStarted data)
+    {
+        if (isSuccess)
+        {
+            _redLightGreenLightGameData = data;
+
+            SceneManager.sceneLoaded += OnRedLightGreenLightSceneLoaded;
+            SceneManager.LoadScene("RedLightGreenLightScene");
+        }
+    }
+
+    private void OnRedLightGreenLightSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        SceneManager.sceneLoaded -= OnRedLightGreenLightSceneLoaded;
+        RedLightGreenLightController redLightGreenLightController = FindObjectOfType<RedLightGreenLightController>();
+        _currentSubGame = redLightGreenLightController;
+        redLightGreenLightController.ManualStart(this, _redLightGreenLightGameData);
+        _inGameDrawer.OnNewSubGameSceneLoaded();
+    }
     public void OnResponseTugOfWarGameStarted(bool isSuccess, ResponsePacketData.TugOfWarGameStarted data)
     {
         if (isSuccess)
