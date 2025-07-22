@@ -85,6 +85,28 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 8cb1c4d6c1d84f742a31a407ff1b7c04, type: 3}
   _sfxAlert:
   - {fileID: 8300000, guid: 557a291513854924bb7fe869ea8f8161, type: 3}
+  _sfxSOS:
+  - {fileID: 8300000, guid: b8e4a863b25016e409d088d2a15540bc, type: 3}
+  _sfxMetalHit:
+  - {fileID: 8300000, guid: e2eff4a88cde28d428b6e496fd2088e5, type: 3}
+  _sfxBrake:
+  - {fileID: 8300000, guid: 1ff2574bee24ac9428508eee30aa796f, type: 3}
+  _sfxRockBreak:
+  - {fileID: 8300000, guid: ad0590b317a05ff4ebd4c0d0f6b37dc2, type: 3}
+  _sfxRockSuccess:
+  - {fileID: 8300000, guid: 8499850a1adb9ee428593098dc372fed, type: 3}
+  _sfxGreenSignal:
+  - {fileID: 8300000, guid: bc0251d9cca1b1b4e87427fbef37a3d5, type: 3}
+  _sfxYellowSignal:
+  - {fileID: 8300000, guid: 9b99bcb8458430c45bba36aad22dfc41, type: 3}
+  _sfxRedSignal:
+  - {fileID: 8300000, guid: f51e2938e09bf734a876e87fe6c26567, type: 3}
+  _sfxJump:
+  - {fileID: 8300000, guid: 50a0783945b70ea448c1757250d745d6, type: 3}
+  _sfxRock:
+  - {fileID: 8300000, guid: bcb42203012c413408f48fe360feca5d, type: 3}
+  _sfxAir:
+  - {fileID: 8300000, guid: 52bec86dc209b2b4792d47b68054e64b, type: 3}
   _bgmOutGame:
   - {fileID: 8300000, guid: 33dc448fbe3b27043b0d8bec58a3ee71, type: 3}
 --- !u!82 &4254529009597376877
@@ -101,7 +123,7 @@ AudioSource:
   m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1
-  Loop: 0
+  Loop: 1
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0

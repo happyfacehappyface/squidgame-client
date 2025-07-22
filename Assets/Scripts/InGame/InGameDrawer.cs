@@ -23,6 +23,7 @@ public class InGameDrawer : MonoBehaviour
     {
         UpdateSurvivePlayers(data);
         _canvasAnimator.SetBool("Open", true);
+        SoundManager.Instance.PlaySfxMetalHit(0.0f);
     }
 
     public void OnNewSubGameSceneLoaded()

@@ -63,7 +63,7 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
         _gameState = TugOfWarGameState.Waiting;
         _tugOfWarGameData = data;
 
-         _preGameBarrier.SetActive(true);
+        _preGameBarrier.SetActive(true);
 
         bool isPlaying = _tugOfWarGameData.leftTeamPlayerIndex.Contains(_inGameController.MyIndex) || _tugOfWarGameData.rightTeamPlayerIndex.Contains(_inGameController.MyIndex);
         bool isUnearnedWin = _tugOfWarGameData.unearnedWinPlayerIndex != null && _tugOfWarGameData.unearnedWinPlayerIndex.Contains(_inGameController.MyIndex);
@@ -86,12 +86,12 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
 
         _noticeText.text = "";
 
-        StartCoroutine(ShowInstructionsAndReady(isPlaying));
+        StartCoroutine(ShowInstructionsAndReady());
         
 
     }
 
-    private IEnumerator ShowInstructionsAndReady(bool isPlaying)
+    private IEnumerator ShowInstructionsAndReady()
     {
         if (_preGameBarrier != null)
         {
@@ -105,10 +105,7 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
 
         yield return new WaitForSeconds(5f);
 
-        if (isPlaying)
-        {
-            NetworkManager.Instance.SendMessageToServer(new RequestPacketData.ReadySubGame());
-        }
+        NetworkManager.Instance.SendMessageToServer(new RequestPacketData.ReadySubGame());
     }
 
     public void OnSubGameStarted()

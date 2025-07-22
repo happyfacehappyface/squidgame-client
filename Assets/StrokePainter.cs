@@ -45,6 +45,10 @@ public class StrokePainter : MonoBehaviour
     private int coveredPointsCount = 0;
     private float _runtimeTolerance;
     private float _runtimeCompletionPercentage;
+    
+    // 사운드 제한을 위한 변수
+    private float lastBurnSoundTime = 0f;
+    private const float BURN_SOUND_INTERVAL = 0.1f; // 0.1초마다 한 번씩만 재생
 
     // --- Unity Methods ---
     void OnEnable()
@@ -59,7 +63,7 @@ public class StrokePainter : MonoBehaviour
 
         if (dalgonaController == null || strokePrefab == null || dalgonaShapeContainer == null || dalgonaSegmentPrefab == null || toleranceVisualizerContainer == null)
         {
-            Debug.LogError("One or more required prefabs/containers are not assigned! Check StrokePainter on " + gameObject.name, gameObject);
+            Utils.LogError("One or more required prefabs/containers are not assigned! Check StrokePainter");
             this.enabled = false;
             return;
         }
@@ -68,7 +72,6 @@ public class StrokePainter : MonoBehaviour
         GenerateShape();
     }
 
-    void Start() { /* Logic is in OnEnable */ }
 
     void Update()
     {
@@ -119,6 +122,13 @@ public class StrokePainter : MonoBehaviour
 
     private void ContinueDrawing()
     {
+        // 사운드 재생 제한: 0.1초마다 한 번씩만 재생
+        if (Time.time - lastBurnSoundTime >= BURN_SOUND_INTERVAL)
+        {
+            SoundManager.Instance.PlaySfxBurn(0.0f);
+            lastBurnSoundTime = Time.time;
+        }
+        
         Vector3 mousePos = GetMouseWorldPosition();
         AddPointToLine(mousePos);
         if (!IsPointOnPath(mousePos)) { TriggerGameOver(); }
@@ -184,7 +194,7 @@ public class StrokePainter : MonoBehaviour
     private void CreateLine(List<Vector3> points, bool loop) { GameObject segmentGO = Instantiate(dalgonaSegmentPrefab, dalgonaShapeContainer); LineRenderer lr = segmentGO.GetComponent<LineRenderer>(); lr.useWorldSpace = true; lr.positionCount = points.Count; lr.SetPositions(points.ToArray()); lr.loop = loop; dalgonaLines.Add(lr); }
     private Vector3 CalculateQuadraticBezierPoint(float t, Vector3 p0, Vector3 p1, Vector3 p2) { float u = 1 - t; float tt = t * t; float uu = u * u; Vector3 p = uu * p0; p += 2 * u * t * p1; p += tt * p2; return p; }
     private void GenerateSpiral() { const float startRadiusFactor = 0.05f; const float endRadiusFactor = 0.5f; const int segments = 150; const int turns = 5; GameObject segmentGO = Instantiate(dalgonaSegmentPrefab, dalgonaShapeContainer); LineRenderer lr = segmentGO.GetComponent<LineRenderer>(); lr.useWorldSpace = true; lr.positionCount = segments; lr.loop = false; float totalAngle = turns * 360f; float spiralStartRadius = shapeSize * startRadiusFactor; float spiralEndRadius = shapeSize * endRadiusFactor; for (int i = 0; i < segments; i++) { float t = (float)i / (segments - 1); float currentAngle = t * totalAngle * Mathf.Deg2Rad; float currentRadius = Mathf.Lerp(spiralStartRadius, spiralEndRadius, t); float x = Mathf.Cos(currentAngle) * currentRadius; float y = Mathf.Sin(currentAngle) * currentRadius; lr.SetPosition(i, new Vector3(x, y, 0)); } dalgonaLines.Add(lr); }
-    private void GenerateCustomShape() { if (customShapeProfile == null || customShapeProfile.paths.Count == 0) { Debug.LogError("Custom Shape Profile is not assigned or has no paths to draw."); return; } foreach (var path in customShapeProfile.paths) { if (path.points.Count >= 2) { CreateLine(path.points, path.closeShape); } } }
+    private void GenerateCustomShape() { if (customShapeProfile == null || customShapeProfile.paths.Count == 0) { Utils.LogError("Custom Shape Profile is not assigned or has no paths to draw."); return; } foreach (var path in customShapeProfile.paths) { if (path.points.Count >= 2) { CreateLine(path.points, path.closeShape); } } }
     private void SierpinskiRecursive(Vector3 p1, Vector3 p2, Vector3 p3, int depth) { if (depth <= 0) { AddTriangle(p1, p2, p3); return; } Vector3 m12 = (p1 + p2) / 2; Vector3 m23 = (p2 + p3) / 2; Vector3 m31 = (p3 + p1) / 2; SierpinskiRecursive(p1, m12, m31, depth - 1); SierpinskiRecursive(p2, m23, m12, depth - 1); SierpinskiRecursive(p3, m31, m23, depth - 1); }
     private void AddTriangle(Vector3 p1, Vector3 p2, Vector3 p3) { GameObject segmentGO = Instantiate(dalgonaSegmentPrefab, dalgonaShapeContainer); LineRenderer lr = segmentGO.GetComponent<LineRenderer>(); lr.useWorldSpace = true; List<Vector3> points = new List<Vector3>(); AddLine(points, p1, p2); points.RemoveAt(points.Count - 1); AddLine(points, p2, p3); points.RemoveAt(points.Count - 1); AddLine(points, p3, p1); lr.positionCount = points.Count; lr.SetPositions(points.ToArray()); dalgonaLines.Add(lr); }
     private void AddLine(List<Vector3> points, Vector3 start, Vector3 end) { const int subdivisions = 3; points.Add(start); for (int i = 1; i <= subdivisions; i++) { float t = (float)i / (subdivisions + 1); points.Add(Vector3.Lerp(start, end, t)); } points.Add(end); }
@@ -193,7 +203,7 @@ public class StrokePainter : MonoBehaviour
     private Vector3 GetMouseWorldPosition() { Vector3 mousePos = Input.mousePosition; mousePos.z = mainCamera.nearClipPlane + 10; return mainCamera.ScreenToWorldPoint(mousePos); }
     private void UpdateProgress() { float progress = (float)coveredPointsCount / totalPointsInShape; if (progress >= _runtimeCompletionPercentage) { TriggerGameWon(); } }
     private void CheckShapeCoverage(Vector3 drawnPoint) { Vector2 drawnPoint2D = new Vector2(drawnPoint.x, drawnPoint.y); coveredPointsCount = 0; for (int i = 0; i < dalgonaLines.Count; i++) { LineRenderer line = dalgonaLines[i]; bool[] tracker = completionPointTrackers[i]; for (int j = 0; j < line.positionCount; j++) { if (!tracker[j]) { Vector3 shapePoint3D = line.useWorldSpace ? line.GetPosition(j) : line.transform.TransformPoint(line.GetPosition(j)); if (Vector2.Distance(drawnPoint2D, new Vector2(shapePoint3D.x, shapePoint3D.y)) <= _runtimeTolerance) { tracker[j] = true; } } if (tracker[j]) coveredPointsCount++; } } }
-    private bool IsPointOnPath(Vector3 point) { if (dalgonaLines.Count == 0) { return false; } float minDistanceOverall = float.MaxValue; foreach (var line in dalgonaLines) { for (int i = 0; i < line.positionCount - 1; i++) { Vector3 p1_3D = line.useWorldSpace ? line.GetPosition(i) : line.transform.TransformPoint(line.GetPosition(i)); Vector3 p2_3D = line.useWorldSpace ? line.GetPosition(i + 1) : line.transform.TransformPoint(line.GetPosition(i + 1)); float distance = DistancePointToLineSegment(new Vector2(point.x, point.y), new Vector2(p1_3D.x, p1_3D.y), new Vector2(p2_3D.x, p2_3D.y)); if (distance < minDistanceOverall) { minDistanceOverall = distance; } } if (line.loop && line.positionCount > 1) { Vector3 p1_3D = line.useWorldSpace ? line.GetPosition(line.positionCount - 1) : line.transform.TransformPoint(line.GetPosition(line.positionCount - 1)); Vector3 p2_3D = line.useWorldSpace ? line.GetPosition(0) : line.transform.TransformPoint(line.GetPosition(0)); float distance = DistancePointToLineSegment(new Vector2(point.x, point.y), new Vector2(p1_3D.x, p1_3D.y), new Vector2(p2_3D.x, p2_3D.y)); if (distance < minDistanceOverall) { minDistanceOverall = distance; } } } bool isOnPath = minDistanceOverall <= _runtimeTolerance; if (!isOnPath) { Debug.LogError($"[DEBUG] 실패! 경로를 벗어났습니다. 마우스 위치: {point}, 가장 가까운 선분과의 거리: {minDistanceOverall}, 허용 오차: {_runtimeTolerance}"); } return isOnPath; }
+    private bool IsPointOnPath(Vector3 point) { if (dalgonaLines.Count == 0) { return false; } float minDistanceOverall = float.MaxValue; foreach (var line in dalgonaLines) { for (int i = 0; i < line.positionCount - 1; i++) { Vector3 p1_3D = line.useWorldSpace ? line.GetPosition(i) : line.transform.TransformPoint(line.GetPosition(i)); Vector3 p2_3D = line.useWorldSpace ? line.GetPosition(i + 1) : line.transform.TransformPoint(line.GetPosition(i + 1)); float distance = DistancePointToLineSegment(new Vector2(point.x, point.y), new Vector2(p1_3D.x, p1_3D.y), new Vector2(p2_3D.x, p2_3D.y)); if (distance < minDistanceOverall) { minDistanceOverall = distance; } } if (line.loop && line.positionCount > 1) { Vector3 p1_3D = line.useWorldSpace ? line.GetPosition(line.positionCount - 1) : line.transform.TransformPoint(line.GetPosition(line.positionCount - 1)); Vector3 p2_3D = line.useWorldSpace ? line.GetPosition(0) : line.transform.TransformPoint(line.GetPosition(0)); float distance = DistancePointToLineSegment(new Vector2(point.x, point.y), new Vector2(p1_3D.x, p1_3D.y), new Vector2(p2_3D.x, p2_3D.y)); if (distance < minDistanceOverall) { minDistanceOverall = distance; } } } bool isOnPath = minDistanceOverall <= _runtimeTolerance; if (!isOnPath) { Utils.Log($"[DEBUG] 실패! 경로를 벗어났습니다. 마우스 위치: {point}, 가장 가까운 선분과의 거리: {minDistanceOverall}, 허용 오차: {_runtimeTolerance}"); } return isOnPath; }
     public static float DistancePointToLineSegment(Vector2 point, Vector2 p1, Vector2 p2) { if (p1 == p2) return Vector2.Distance(point, p1); Vector2 lineDirection = p2 - p1; float lineLengthSqr = lineDirection.sqrMagnitude; Vector2 pointVector = point - p1; float t = Mathf.Clamp01(Vector2.Dot(pointVector, lineDirection) / lineLengthSqr); Vector2 projection = p1 + t * lineDirection; return Vector2.Distance(point, projection); }
     private void SetupToleranceVisualizers() { ClearToleranceVisualizers(); foreach (var dalgonaLine in dalgonaLines) { GameObject visualizerGO = Instantiate(dalgonaSegmentPrefab, toleranceVisualizerContainer); LineRenderer visualizerLR = visualizerGO.GetComponent<LineRenderer>(); if (toleranceMaterial != null) { visualizerLR.material = toleranceMaterial; } visualizerLR.useWorldSpace = dalgonaLine.useWorldSpace; if (!visualizerLR.useWorldSpace) { visualizerGO.transform.SetParent(dalgonaLine.transform, false); } Vector3[] points = new Vector3[dalgonaLine.positionCount]; dalgonaLine.GetPositions(points); visualizerLR.positionCount = dalgonaLine.positionCount; visualizerLR.SetPositions(points); visualizerLR.startWidth = _runtimeTolerance * 2f; visualizerLR.endWidth = _runtimeTolerance * 2f; visualizerLR.loop = dalgonaLine.loop; visualizerLR.sortingOrder = dalgonaLine.sortingOrder - 1; toleranceLines.Add(visualizerLR); } }
     private void ClearToleranceVisualizers() { if (Application.isPlaying) { foreach (Transform child in toleranceVisualizerContainer) Destroy(child.gameObject); } else { while (toleranceVisualizerContainer.childCount > 0) DestroyImmediate(toleranceVisualizerContainer.GetChild(0).gameObject); } toleranceLines.Clear(); }

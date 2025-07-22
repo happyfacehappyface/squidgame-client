@@ -45,10 +45,9 @@ public class DalgonaController : MonoBehaviour, ISubGameController
             _deadNotice.SetActive(!isPlaying);
         }
 
-        if (isPlaying)
-        {
-            StartCoroutine(ShowInstructionsAndReady());
-        }
+        SoundManager.Instance.PlaySfxSubGameStart(0.0f);
+
+        StartCoroutine(ShowInstructionsAndReady());
     }
 
     private IEnumerator ShowInstructionsAndReady()
@@ -118,7 +117,14 @@ public class DalgonaController : MonoBehaviour, ISubGameController
         if (isSuccess)
         {
             Debug.Log("Dalgona Game: OnResponseDalgonaGameResult");
-            // This is just a confirmation from server, actual result is handled by OnClick... methods
+            if (data.isSuccess)
+            {
+                SoundManager.Instance.PlaySfxJump(0.0f);
+            }
+            else
+            {
+                SoundManager.Instance.PlaySfxLaser(0.0f);
+            }
         }
     }
 
@@ -126,6 +132,7 @@ public class DalgonaController : MonoBehaviour, ISubGameController
     {
         Utils.Log("Dalgona Game: OnSuccess");
         NetworkManager.Instance.SendMessageToServer(new RequestPacketData.DalgonaGameResult(true));
+        SoundManager.Instance.PlaySfxRockSuccess(0.0f);
     }
 
     public void OnFail()
@@ -138,6 +145,8 @@ public class DalgonaController : MonoBehaviour, ISubGameController
         }
         NetworkManager.Instance.SendMessageToServer(new RequestPacketData.DalgonaGameResult(false));
         _inGameController.OnPlayerDeath();
+        SoundManager.Instance.PlaySfxRockBreak(0.0f);
+        SoundManager.Instance.PlaySfxLaser(1.2f);
     }
 
 }

@@ -32,6 +32,18 @@ public class SoundManager : MonoBehaviour
     [SerializeField] private AudioClip[] _sfxSubGameStart;
     [SerializeField] private AudioClip[] _sfxAlert;
 
+    [SerializeField] private AudioClip[] _sfxSOS;
+    [SerializeField] private AudioClip[] _sfxMetalHit;
+    [SerializeField] private AudioClip[] _sfxBrake;
+    [SerializeField] private AudioClip[] _sfxRockBreak;
+    [SerializeField] private AudioClip[] _sfxRockSuccess;
+    [SerializeField] private AudioClip[] _sfxGreenSignal;
+    [SerializeField] private AudioClip[] _sfxYellowSignal;
+    [SerializeField] private AudioClip[] _sfxRedSignal;
+    [SerializeField] private AudioClip[] _sfxJump;
+    [SerializeField] private AudioClip[] _sfxRock;
+    [SerializeField] private AudioClip[] _sfxAir;
+
 
     [SerializeField] private AudioClip[] _bgmOutGame;
 
@@ -75,6 +87,18 @@ public class SoundManager : MonoBehaviour
     public void PlaySfxSlash(float delay) => PlayRandomSfx(_sfxSlash, delay);
     public void PlaySfxSubGameStart(float delay) => PlayRandomSfx(_sfxSubGameStart, delay);
     public void PlaySfxAlert(float delay) => PlayRandomSfx(_sfxAlert, delay);
+
+    public void PlaySfxSOS(float delay) => PlayRandomSfx(_sfxSOS, delay);
+    public void PlaySfxMetalHit(float delay) => PlayRandomSfx(_sfxMetalHit, delay);
+    public void PlaySfxBrake(float delay) => PlayRandomSfx(_sfxBrake, delay);
+    public void PlaySfxRockBreak(float delay) => PlayRandomSfx(_sfxRockBreak, delay);
+    public void PlaySfxRockSuccess(float delay) => PlayRandomSfx(_sfxRockSuccess, delay);
+    public void PlaySfxGreenSignal(float delay) => PlayRandomSfx(_sfxGreenSignal, delay);
+    public void PlaySfxYellowSignal(float delay) => PlayRandomSfx(_sfxYellowSignal, delay);
+    public void PlaySfxRedSignal(float delay) => PlayRandomSfx(_sfxRedSignal, delay);
+    public void PlaySfxJump(float delay) => PlayRandomSfx(_sfxJump, delay);
+    public void PlaySfxRock(float delay) => PlayRandomSfx(_sfxRock, delay);
+    public void PlaySfxAir(float delay) => PlayRandomSfx(_sfxAir, delay);
 
     public void PlayBgmOutGame(bool loop = true) => PlayRandomBgm(_bgmOutGame, loop);
 

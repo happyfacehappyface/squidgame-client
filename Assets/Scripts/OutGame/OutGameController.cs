@@ -62,7 +62,7 @@ public class OutGameController : MonoBehaviour
         }
         else
         {
-            _playerName = _playerNameInputField.text;
+            _playerNameInputField.text = _playerName;
         }
     }
 
@@ -100,6 +100,7 @@ public class OutGameController : MonoBehaviour
         {
             _canvasAnimator.SetTrigger("InRoom");
             SoundManager.Instance.PlaySfxSpaceShip(0.0f);
+            SoundManager.Instance.PlaySfxAir(1.0f);
         }
         else
         {
@@ -141,12 +142,15 @@ public class OutGameController : MonoBehaviour
             
             StartCoroutine(CO_OpenInGameScene());
         }
+
+        _waitForServer.SetActive(false);
     }
 
     private IEnumerator CO_OpenInGameScene()
     {
         _canvasAnimator.SetTrigger("StartGame");
         SoundManager.Instance.PlaySfxSpaceShip(0.0f);
+        SoundManager.Instance.PlaySfxGameStart(0.0f);
         yield return new WaitForSeconds(1.0f);
 
         SceneManager.sceneLoaded += OnInGameSceneLoaded;
