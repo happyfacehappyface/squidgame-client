@@ -45,10 +45,7 @@ public class DalgonaController : MonoBehaviour, ISubGameController
             _deadNotice.SetActive(!isPlaying);
         }
 
-        if (isPlaying)
-        {
-            StartCoroutine(ShowInstructionsAndReady());
-        }
+        StartCoroutine(ShowInstructionsAndReady());
     }
 
     private IEnumerator ShowInstructionsAndReady()

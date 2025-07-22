@@ -82,11 +82,11 @@ public class RedLightGreenLightController : MonoBehaviour, ISubGameController
 
         if (Input.GetKey(KeyCode.Space))
         {
-            _myProgressVelocity = Mathf.Clamp(_myProgressVelocity + (Time.deltaTime * 0.15f), 0f, _velocityLimit);
+            _myProgressVelocity = Mathf.Clamp(_myProgressVelocity + (Time.deltaTime * 0.12f), 0f, _velocityLimit);
         }
         else
         {
-            _myProgressVelocity = Mathf.Clamp(_myProgressVelocity - (Time.deltaTime * 0.2f), 0f, _velocityLimit);
+            _myProgressVelocity = Mathf.Clamp(_myProgressVelocity - (Time.deltaTime * 0.14f), 0f, _velocityLimit);
         }
 
     }

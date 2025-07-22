@@ -62,7 +62,7 @@ public class OutGameController : MonoBehaviour
         }
         else
         {
-            _playerName = _playerNameInputField.text;
+            _playerNameInputField.text = _playerName;
         }
     }
 
@@ -141,6 +141,8 @@ public class OutGameController : MonoBehaviour
             
             StartCoroutine(CO_OpenInGameScene());
         }
+
+        _waitForServer.SetActive(false);
     }
 
     private IEnumerator CO_OpenInGameScene()
