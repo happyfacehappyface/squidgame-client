@@ -7,6 +7,7 @@ public class RedLightGreenLightController : MonoBehaviour, ISubGameController
 {
 
     [SerializeField] private RedLightGreenLightDrawer _drawer;
+    [SerializeField] private GameObject _preGameBarrier;
 
     private InGameController _inGameController;
     private ResponsePacketData.RedLightGreenLightGameStarted _redLightGreenLightGameData;
@@ -41,6 +42,9 @@ public class RedLightGreenLightController : MonoBehaviour, ISubGameController
         _inGameController = inGameController;
         _redLightGreenLightGameData = data;
 
+
+        _preGameBarrier.SetActive(true);
+
         PlayerIsPlaying = Utils.DeepCopy1D(_inGameController.PlayerIsAlive);
         PlayerProgress = Utils.CreateFill1D(_inGameController.PlayerCount, 0f);
         PlayerProgressMovingAverage = Utils.CreateFill1D(_inGameController.PlayerCount, 0f);
@@ -56,11 +60,32 @@ public class RedLightGreenLightController : MonoBehaviour, ISubGameController
 
         _drawer.ManualStart(this);
 
+        StartCoroutine(ShowInstructionsAndReady());
+
+    }
+
+    private IEnumerator ShowInstructionsAndReady()
+    {
+        if (_preGameBarrier != null)
+        {
+            _preGameBarrier.SetActive(true);
+            Animator barrierAnimator = _preGameBarrier.GetComponent<Animator>();
+            if (barrierAnimator != null)
+            {
+                barrierAnimator.SetTrigger("Show");
+            }
+        }
+
+        yield return new WaitForSeconds(5f);
+
         NetworkManager.Instance.SendMessageToServer(new RequestPacketData.ReadySubGame());
     }
 
     public void OnSubGameStarted()
     {
+
+        _preGameBarrier.SetActive(false);
+
         Utils.Log("RedLightGreenLightController.OnSubGameStarted");
         _isGameStarted = true;
         _keepSendMyPositionCoroutine = StartCoroutine(CO_KeepSendMyPosition());
