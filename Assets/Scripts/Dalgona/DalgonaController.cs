@@ -146,7 +146,7 @@ public class DalgonaController : MonoBehaviour, ISubGameController
         NetworkManager.Instance.SendMessageToServer(new RequestPacketData.DalgonaGameResult(false));
         _inGameController.OnPlayerDeath();
         SoundManager.Instance.PlaySfxRockBreak(0.0f);
-        SoundManager.Instance.PlaySfxLaser(0.5f);
+        SoundManager.Instance.PlaySfxLaser(1.2f);
     }
 
 }
