@@ -9,6 +9,8 @@ public class OutGameController : MonoBehaviour
 {
     private ResponsePacketData.StartGame _startGameData;
 
+    private static string _playerName = "";
+
     [SerializeField] private OutGamePopupHandler _popupHandler;
 
     [SerializeField] private GameObject _inGameControllerPrefab;
@@ -52,6 +54,12 @@ public class OutGameController : MonoBehaviour
     {
         _popupHandler.ManualStart(this);
         SoundManager.Instance.PlayBgmOutGame();
+
+        if (_playerName == "")
+        {
+            _playerName = GenerateRandomPlayerName();
+            _playerNameInputField.text = _playerName;
+        }
     }
 
     public void RequestEnterRoom()
@@ -65,6 +73,7 @@ public class OutGameController : MonoBehaviour
         {
             _waitForServer.SetActive(true);
             NetworkManager.Instance.SendMessageToServer(new RequestPacketData.EnterRoom(_playerNameInputField.text));
+            _playerName = _playerNameInputField.text;
         }
     }
 
@@ -145,5 +154,11 @@ public class OutGameController : MonoBehaviour
         SceneManager.sceneLoaded -= OnInGameSceneLoaded;
         InGameController controller = Instantiate(_inGameControllerPrefab).GetComponent<InGameController>();
         controller.ManualStart(_startGameData);
+    }
+    
+    private string GenerateRandomPlayerName()
+    {
+        string[] candidate = new string[] {"동현", "승준", "재헌", "재현", "지민", "창민", "하민", "서우", "현우", "한준", "광호", "서우", "서우", "서우", "서우"};
+        return candidate[Random.Range(0, candidate.Length)];
     }
 }
