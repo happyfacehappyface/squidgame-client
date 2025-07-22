@@ -210,6 +210,7 @@ public class InGameController : MonoBehaviour
     public void OnPlayerDeath()
     {
         _inGameDrawer.SetDeathIndicatorTrue();
+        SoundManager.Instance.PlaySfxDeath(0.5f);
     }
 
     

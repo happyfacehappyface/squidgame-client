@@ -81,6 +81,7 @@ public class ShapeSelectionController : MonoBehaviour
             }
 
             dalgonaController.OnShapeSelected(shape, shapeDifficulties[shape]);
+            SoundManager.Instance.PlaySfxRock(0.0f);
         }
         else
         {

@@ -56,6 +56,7 @@ public class RedLightGreenLightController : MonoBehaviour, ISubGameController
 
         _drawer.ManualStart(this);
 
+    SoundManager.Instance.PlaySfxSubGameStart(0.0f);
         NetworkManager.Instance.SendMessageToServer(new RequestPacketData.ReadySubGame());
     }
 
@@ -86,6 +87,11 @@ public class RedLightGreenLightController : MonoBehaviour, ISubGameController
         }
         else
         {
+            if (_myProgressVelocity == _velocityLimit)
+            {
+                SoundManager.Instance.PlaySfxBrake(0.0f);
+            }
+
             _myProgressVelocity = Mathf.Clamp(_myProgressVelocity - (Time.deltaTime * 0.14f), 0f, _velocityLimit);
         }
 
@@ -133,10 +139,12 @@ public class RedLightGreenLightController : MonoBehaviour, ISubGameController
             if (_currentTime - yellow.StartTime > TimeSpan.FromSeconds(1.0f))
             {
                 CurrentLightState = new LightState.Red();
+                SoundManager.Instance.PlaySfxRedSignal(0.0f);
             }
         }
 
         _drawer.ManualUpdate();
+        
     }
 
     private void UpdateMovingAverage()
@@ -159,10 +167,12 @@ public class RedLightGreenLightController : MonoBehaviour, ISubGameController
             if (data.redLightOn)
             {
                 CurrentLightState = new LightState.Yellow(_currentTime);
+                SoundManager.Instance.PlaySfxYellowSignal(0.0f);
             }
             else
             {
                 CurrentLightState = new LightState.Green();
+                SoundManager.Instance.PlaySfxGreenSignal(0.0f);
             }
         }
     }
@@ -173,6 +183,15 @@ public class RedLightGreenLightController : MonoBehaviour, ISubGameController
         {
             PlayerIsPlaying[data.playerIndex] = false;
             _drawer.OnResponsePlayerResult(data);
+
+            if (data.isSuccess)
+            {
+                SoundManager.Instance.PlaySfxJump(0.0f);
+            }
+            else
+            {
+                SoundManager.Instance.PlaySfxLaser(0.0f);
+            }
 
             if (!data.isSuccess && (data.playerIndex == MyIndex))
             {

@@ -100,6 +100,7 @@ public class OutGameController : MonoBehaviour
         {
             _canvasAnimator.SetTrigger("InRoom");
             SoundManager.Instance.PlaySfxSpaceShip(0.0f);
+            SoundManager.Instance.PlaySfxAir(1.0f);
         }
         else
         {
@@ -149,6 +150,7 @@ public class OutGameController : MonoBehaviour
     {
         _canvasAnimator.SetTrigger("StartGame");
         SoundManager.Instance.PlaySfxSpaceShip(0.0f);
+        SoundManager.Instance.PlaySfxGameStart(0.0f);
         yield return new WaitForSeconds(1.0f);
 
         SceneManager.sceneLoaded += OnInGameSceneLoaded;
