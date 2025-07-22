@@ -161,6 +161,7 @@ MonoBehaviour:
   _nameText: {fileID: 1788984819581367541}
   _isMeIndicator: {fileID: 6553697002091737}
   _animator: {fileID: 2394624119757964188}
+  _unearnedWinIndicator: {fileID: 0}
   _playerComponent: {fileID: 4509311602896500150}
 --- !u!1 &2033448041452963336
 GameObject:

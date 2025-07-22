@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using System;
+using System.Linq;
 
 public class DalgonaController : MonoBehaviour, ISubGameController
 {
@@ -12,6 +13,7 @@ public class DalgonaController : MonoBehaviour, ISubGameController
     [SerializeField] private GameObject _shapeSelectionBarrier;
     [SerializeField] private GameObject _dalgonaGameplay;
     [SerializeField] private StrokePainter _strokePainter;
+    [SerializeField] private GameObject _deadNotice;
 
     [Header("Timer")]
     [SerializeField] private TextMeshProUGUI _timerText;
@@ -19,12 +21,11 @@ public class DalgonaController : MonoBehaviour, ISubGameController
     private bool _isTimerRunning = false;
 
     private ResponsePacketData.DalgonaGameStarted _dalgonaGameData;
+    private InGameController _inGameController;
 
-
-
-
-    public void ManualStart(ResponsePacketData.DalgonaGameStarted data)
+    public void ManualStart(InGameController inGameController, ResponsePacketData.DalgonaGameStarted data)
     {
+        _inGameController = inGameController;
         _isTimerRunning = false;
 
         _preGameBarrier.SetActive(true);
@@ -35,7 +36,31 @@ public class DalgonaController : MonoBehaviour, ISubGameController
         Debug.Log("Dalgona Game: ManualStart");
 
         _dalgonaGameplay.SetActive(false);
+        _shapeSelectionBarrier.SetActive(false);
+        
+        bool isPlaying = _dalgonaGameData.playerIndices.Contains(_inGameController.MyIndex);
+        if (_deadNotice != null)
+        {
+            _deadNotice.SetActive(!isPlaying);
+        }
 
+        if (isPlaying)
+        {
+            StartCoroutine(ShowInstructionsAndReady());
+        }
+    }
+
+    private IEnumerator ShowInstructionsAndReady()
+    {
+        Animator barrierAnimator = _preGameBarrier.GetComponent<Animator>();
+        
+        if (barrierAnimator != null)
+        {
+            barrierAnimator.SetTrigger("Show");
+        }
+
+        yield return new WaitForSeconds(5f);
+        
         NetworkManager.Instance.SendMessageToServer(new RequestPacketData.ReadySubGame());
     }
 
@@ -54,6 +79,13 @@ public class DalgonaController : MonoBehaviour, ISubGameController
             _currentTime -= TimeSpan.FromSeconds(Time.deltaTime);
             UpdateTimerUI();
         }
+//디버깅용
+#if UNITY_EDITOR
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            OnSuccess();
+        }
+#endif
     }
     
     private void UpdateTimerUI()
