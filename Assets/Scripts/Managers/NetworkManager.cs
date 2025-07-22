@@ -483,7 +483,7 @@ public abstract record ResponsePacketData
     public sealed record GameEnded(int winnerPlayerIndex) : ResponsePacketData;
 
 
-    public sealed record DalgonaGameStarted(int timeLimitMs) : ResponsePacketData;
+    public sealed record DalgonaGameStarted(int timeLimitMs, int[] playerIndices) : ResponsePacketData;
 
     public sealed record DalgonaGameResult(int playerIndex, bool isSuccess) : ResponsePacketData;
 

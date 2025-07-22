@@ -25,6 +25,11 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
     [SerializeField] private TextMeshProUGUI _noticeText;
     [SerializeField] private Animator _spaceBarAnimator;
 
+    [SerializeField] private GameObject _unearnedWinNotice;
+    [SerializeField] private GameObject _deadNotice;
+
+    [SerializeField] private GameObject _preGameBarrier;
+
     [Header("Timer")]
     [SerializeField] private TextMeshProUGUI _timerText;
     private TimeSpan _currentTime;
@@ -57,6 +62,22 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
         _inGameController = inGameController;
         _gameState = TugOfWarGameState.Waiting;
         _tugOfWarGameData = data;
+
+         _preGameBarrier.SetActive(true);
+
+        bool isPlaying = _tugOfWarGameData.leftTeamPlayerIndex.Contains(_inGameController.MyIndex) || _tugOfWarGameData.rightTeamPlayerIndex.Contains(_inGameController.MyIndex);
+        bool isUnearnedWin = _tugOfWarGameData.unearnedWinPlayerIndex != null && _tugOfWarGameData.unearnedWinPlayerIndex.Contains(_inGameController.MyIndex);
+
+        if (_unearnedWinNotice != null)
+        {
+            _unearnedWinNotice.SetActive(isUnearnedWin);
+        }
+
+        if (_deadNotice != null)
+        {
+            _deadNotice.SetActive(!isUnearnedWin && !isPlaying);
+        }
+
         _isTimerRunning = false;
         _currentTime = TimeSpan.FromMilliseconds(data.timeLimitMs);
         UpdateTimerUI();
@@ -65,12 +86,34 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
 
         _noticeText.text = "";
 
+        StartCoroutine(ShowInstructionsAndReady(isPlaying));
+        
 
-        NetworkManager.Instance.SendMessageToServer(new RequestPacketData.ReadySubGame());
+    }
+
+    private IEnumerator ShowInstructionsAndReady(bool isPlaying)
+    {
+        if (_preGameBarrier != null)
+        {
+            _preGameBarrier.SetActive(true);
+            Animator barrierAnimator = _preGameBarrier.GetComponent<Animator>();
+            if (barrierAnimator != null)
+            {
+                barrierAnimator.SetTrigger("Show");
+            }
+        }
+
+        yield return new WaitForSeconds(5f);
+
+        if (isPlaying)
+        {
+            NetworkManager.Instance.SendMessageToServer(new RequestPacketData.ReadySubGame());
+        }
     }
 
     public void OnSubGameStarted()
     {
+        _preGameBarrier.SetActive(false);
         Utils.Log("TugOfWarController.OnSubGameStarted");
         _gameState = TugOfWarGameState.Playing;
         _isTimerRunning = true;

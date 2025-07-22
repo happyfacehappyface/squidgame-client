@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.Linq;
 
 public class InGameController : MonoBehaviour
 {
@@ -93,7 +94,14 @@ public class InGameController : MonoBehaviour
                 _playerIsAlive[i] = data.survivePlayerIndices.Contains(i);
             }
 
-            _inGameDrawer.OnSubGameEnded(data);
+            var finalData = data;
+            if (_currentSubGame is TugOfWarController && _tugOfWarGameData.unearnedWinPlayerIndex != null)
+            {
+                var newSurvivePlayerIndices = data.survivePlayerIndices.Union(_tugOfWarGameData.unearnedWinPlayerIndex).ToArray();
+                finalData = new ResponsePacketData.SubGameEnded(newSurvivePlayerIndices);
+            }
+//코드 별로임 : 부전승자를 수동으로 추가하는 식
+            _inGameDrawer.OnSubGameEnded(finalData);
         }
     }
 
@@ -145,7 +153,7 @@ public class InGameController : MonoBehaviour
         SceneManager.sceneLoaded -= OnDalgonaSceneLoaded;
         DalgonaController dalgonaController = FindObjectOfType<DalgonaController>();
         _currentSubGame = dalgonaController;
-        dalgonaController.ManualStart(_dalgonaGameData);
+        dalgonaController.ManualStart(this, _dalgonaGameData);
         _inGameDrawer.OnNewSubGameSceneLoaded();
     }
 

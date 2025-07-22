@@ -12,8 +12,6 @@ public class TugOfWarPlayerComponent : MonoBehaviour
 
     [SerializeField] private PlayerComponent _playerComponent;
 
-
-
     public void ManualStart(int playerIndex, string playerName, bool isMe, bool isLeft)
     {
         _isMeIndicator.SetActive(isMe);
