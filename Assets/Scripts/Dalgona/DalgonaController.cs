@@ -14,6 +14,7 @@ public class DalgonaController : MonoBehaviour, ISubGameController
     [SerializeField] private GameObject _dalgonaGameplay;
     [SerializeField] private StrokePainter _strokePainter;
     [SerializeField] private GameObject _deadNotice;
+    [SerializeField] private Animator _failureAnimator;
 
     [Header("Timer")]
     [SerializeField] private TextMeshProUGUI _timerText;
@@ -130,6 +131,11 @@ public class DalgonaController : MonoBehaviour, ISubGameController
     public void OnFail()
     {
         Debug.Log("Dalgona Game: OnFail");
+        if (_failureAnimator != null)
+        {
+            _failureAnimator.gameObject.SetActive(true);
+            _failureAnimator.SetTrigger("Fail");
+        }
         NetworkManager.Instance.SendMessageToServer(new RequestPacketData.DalgonaGameResult(false));
     }
 
