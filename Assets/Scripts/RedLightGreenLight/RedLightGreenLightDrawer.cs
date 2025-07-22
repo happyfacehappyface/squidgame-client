@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using UnityEngine.UI;
+using TMPro;
 
 public class RedLightGreenLightDrawer : MonoBehaviour
 {
@@ -14,6 +16,8 @@ public class RedLightGreenLightDrawer : MonoBehaviour
     [SerializeField] private Transform _ufoBulletParent;
 
     [SerializeField] private Transform _ufoTransform;
+
+    [SerializeField] private TextMeshProUGUI _timeCountText;
 
 
     private RedLightGreenLightController _controller;
@@ -49,6 +53,11 @@ public class RedLightGreenLightDrawer : MonoBehaviour
 
         UpdateUFOPosition();
         UpdateUFOBulletComponents();
+
+        int timeLeftInt = Mathf.Max(0, (int)(_controller.TimeLeft.TotalSeconds));
+
+        _timeCountText.text = timeLeftInt.ToString();
+        _timeCountText.color = timeLeftInt > 10 ? Color.black : Color.red;
     }
 
     private void UpdatePlayerPosition()

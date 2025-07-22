@@ -195,8 +195,10 @@ public class RedLightGreenLightController : MonoBehaviour, ISubGameController
         if (isSuccess)
         {
             Utils.Log("RedLightGreenLightController.OnResponseRedLightGreenLightGameResult");
-            PlayerIsPlaying = Utils.CreateFill1D(PlayerCount, false);
+            
             _drawer.OnResponseGameResult(data);
+
+            PlayerIsPlaying = Utils.CreateFill1D(PlayerCount, false);
             _isGameStarted = false;
             StopCoroutine(_keepSendMyPositionCoroutine);
         }
