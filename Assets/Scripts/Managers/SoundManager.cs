@@ -48,6 +48,8 @@ public class SoundManager : MonoBehaviour
 
     [SerializeField] private AudioClip[] _bgmOutGame;
 
+    [SerializeField] private AudioClip[] _voiceIntro;
+
     private bool _isReady = false;
 
     private void Awake()
@@ -105,6 +107,8 @@ public class SoundManager : MonoBehaviour
 
     public void PlayBgmOutGame(bool loop = true) => PlayRandomBgm(_bgmOutGame, loop);
 
+    public void PlayVoiceIntro(float delay) => PlayRandomVoice(_voiceIntro, delay);
+
 
     private void PlayRandomSfx(AudioClip[] clips, float delay)
     {
@@ -156,5 +160,24 @@ public class SoundManager : MonoBehaviour
     public void StopBgm()
     {
         _bgmSource.Stop();
+    }
+
+
+    public void PlayRandomVoice(AudioClip[] clips, float delay)
+    {
+        if (clips != null && clips.Length > 0)
+        {
+            int randomIndex = Random.Range(0, clips.Length);
+            PlayVoice(clips[randomIndex], delay);
+        }
+    }
+
+    private void PlayVoice(AudioClip clip, float delay)
+    {
+        if (clip != null)
+        {
+            _voiceSource.clip = clip;
+            _voiceSource.Play();
+        }
     }
 }

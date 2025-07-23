@@ -13,6 +13,7 @@ public class SplashController : MonoBehaviour
         if (SoundManager.Instance.IsReady())
         {
             SoundManager.Instance.PlaySfxSplash(0f);
+            SoundManager.Instance.PlayVoiceIntro(0.8f);
         }
 
     }

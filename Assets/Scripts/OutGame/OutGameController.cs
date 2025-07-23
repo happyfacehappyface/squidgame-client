@@ -98,6 +98,11 @@ public class OutGameController : MonoBehaviour
     {
         if (isSuccess)
         {
+            if (_playerNameInputField.text == "서우게임즈")
+            {
+                SoundManager.Instance.PlayVoiceIntro(0f);
+            }
+
             _canvasAnimator.SetTrigger("InRoom");
             SoundManager.Instance.PlaySfxSpaceShip(0.0f);
             SoundManager.Instance.PlaySfxAir(1.0f);

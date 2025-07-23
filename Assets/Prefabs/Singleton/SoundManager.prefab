@@ -111,6 +111,8 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 06319c9108833fd46b7f8a28d8de6433, type: 3}
   _bgmOutGame:
   - {fileID: 8300000, guid: 33dc448fbe3b27043b0d8bec58a3ee71, type: 3}
+  _voiceIntro:
+  - {fileID: 8300000, guid: 351fddb9a47188146ad7743c9b3acb59, type: 3}
 --- !u!82 &4254529009597376877
 AudioSource:
   m_ObjectHideFlags: 0
