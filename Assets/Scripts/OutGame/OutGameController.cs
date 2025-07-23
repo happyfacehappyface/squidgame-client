@@ -33,7 +33,7 @@ public class OutGameController : MonoBehaviour
     void Update()
     {
         #if RELEASE
-        if ((Input.GetKeyDown(KeyCode.Z)) && (Input.GetKeyDown(KeyCode.A)) && (Input.GetKeyDown(KeyCode.Q)) && (Input.GetKeyDown(KeyCode.M)))
+        if ((Input.GetKey(KeyCode.Z)) && (Input.GetKey(KeyCode.A)) && (Input.GetKey(KeyCode.Q)) && (Input.GetKey(KeyCode.M)))
         {
             _startGameButton.interactable = true;
         }
