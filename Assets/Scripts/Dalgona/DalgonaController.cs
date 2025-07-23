@@ -15,6 +15,7 @@ public class DalgonaController : MonoBehaviour, ISubGameController
     [SerializeField] private StrokePainter _strokePainter;
     [SerializeField] private GameObject _deadNotice;
     [SerializeField] private Animator _failureAnimator;
+    [SerializeField] private Animator _successAnimator;
 
     [Header("Timer")]
     [SerializeField] private TextMeshProUGUI _timerText;
@@ -153,6 +154,11 @@ public class DalgonaController : MonoBehaviour, ISubGameController
 
         _isResultSended = true;
         Utils.Log("Dalgona Game: OnSuccess");
+        if (_successAnimator != null)
+        {
+            _successAnimator.gameObject.SetActive(true);
+            _successAnimator.SetTrigger("Success");
+        }
         NetworkManager.Instance.SendMessageToServer(new RequestPacketData.DalgonaGameResult(true));
         SoundManager.Instance.PlaySfxRockSuccess(0.0f);
     }
