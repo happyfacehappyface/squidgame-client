@@ -24,6 +24,8 @@ public class DalgonaController : MonoBehaviour, ISubGameController
     private ResponsePacketData.DalgonaGameStarted _dalgonaGameData;
     private InGameController _inGameController;
 
+    private bool _isResultSended = false;
+
     public void ManualStart(InGameController inGameController, ResponsePacketData.DalgonaGameStarted data)
     {
         _inGameController = inGameController;
@@ -44,6 +46,8 @@ public class DalgonaController : MonoBehaviour, ISubGameController
         {
             _deadNotice.SetActive(!isPlaying);
         }
+
+        _isResultSended = !isPlaying;
 
         SoundManager.Instance.PlaySfxSubGameStart(0.0f);
 
@@ -144,6 +148,10 @@ public class DalgonaController : MonoBehaviour, ISubGameController
 
     public void OnSuccess()
     {
+
+        if (_isResultSended) return;
+
+        _isResultSended = true;
         Utils.Log("Dalgona Game: OnSuccess");
         NetworkManager.Instance.SendMessageToServer(new RequestPacketData.DalgonaGameResult(true));
         SoundManager.Instance.PlaySfxRockSuccess(0.0f);
@@ -151,6 +159,10 @@ public class DalgonaController : MonoBehaviour, ISubGameController
 
     public void OnFail()
     {
+        if (_isResultSended) return;
+
+        _isResultSended = true;
+        
         Utils.Log("Dalgona Game: OnFail");
         if (_failureAnimator != null)
         {
