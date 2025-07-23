@@ -58,6 +58,8 @@ public class RedLightGreenLightController : MonoBehaviour, ISubGameController
 
         _myProgressVelocity = 0f;
 
+        SoundManager.Instance.PlaySfxSubGameStart(0.0f);
+
         _drawer.ManualStart(this);
 
         StartCoroutine(ShowInstructionsAndReady());
@@ -78,7 +80,7 @@ public class RedLightGreenLightController : MonoBehaviour, ISubGameController
 
         yield return new WaitForSeconds(5f);
 
-        SoundManager.Instance.PlaySfxSubGameStart(0.0f);
+        
         NetworkManager.Instance.SendMessageToServer(new RequestPacketData.ReadySubGame());
     }
 
