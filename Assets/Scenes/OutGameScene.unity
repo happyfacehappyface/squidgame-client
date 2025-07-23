@@ -4496,7 +4496,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uC624\uC9D5\uC5B4 \uAC8C\uC784"
+  m_text: "\uC624\uC9D5\uC5B4\uC2A4"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 21dabe09d70eb7a4da277c581774f6a8, type: 2}
   m_sharedMaterial: {fileID: -1984305883638745279, guid: 21dabe09d70eb7a4da277c581774f6a8, type: 2}
@@ -4523,8 +4523,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 150
-  m_fontSizeBase: 150
+  m_fontSize: 160
+  m_fontSizeBase: 160
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
