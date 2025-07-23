@@ -3218,6 +3218,7 @@ MonoBehaviour:
   _playerCountText: {fileID: 1217517476}
   _playerNameInputField: {fileID: 1049742419}
   _canvasAnimator: {fileID: 478074401}
+  _startGameButton: {fileID: 2091367002}
 --- !u!114 &1360429795
 MonoBehaviour:
   m_ObjectHideFlags: 0

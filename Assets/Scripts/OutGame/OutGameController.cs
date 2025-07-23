@@ -20,6 +20,9 @@ public class OutGameController : MonoBehaviour
     [SerializeField] private TMP_InputField _playerNameInputField;
     [SerializeField] private Animator _canvasAnimator;
 
+
+    [SerializeField] private Button _startGameButton;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -29,7 +32,12 @@ public class OutGameController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
+        #if RELEASE
+        if ((Input.GetKeyDown(KeyCode.Z)) && (Input.GetKeyDown(KeyCode.A)) && (Input.GetKeyDown(KeyCode.Q)) && (Input.GetKeyDown(KeyCode.M)))
+        {
+            _startGameButton.interactable = true;
+        }
+        #endif
     }
 
     public void OnClickEnterRoom()
@@ -52,6 +60,11 @@ public class OutGameController : MonoBehaviour
 
     private void ManualStart()
     {
+        #if RELEASE
+        _startGameButton.interactable = false;
+        #endif
+
+
         _popupHandler.ManualStart(this);
         SoundManager.Instance.PlayBgmOutGame();
 
