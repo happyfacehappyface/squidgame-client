@@ -54,6 +54,9 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
     List<GameObject> _rightHands = new List<GameObject>();
 
     private TugOfWarGameState _gameState;
+
+    private bool _isPlaying = false;
+    private bool _isLeftTeam = false;
     
 
     public void ManualStart(InGameController inGameController, ResponsePacketData.TugOfWarGameStarted data)
@@ -67,6 +70,10 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
 
         bool isPlaying = _tugOfWarGameData.leftTeamPlayerIndex.Contains(_inGameController.MyIndex) || _tugOfWarGameData.rightTeamPlayerIndex.Contains(_inGameController.MyIndex);
         bool isUnearnedWin = _tugOfWarGameData.unearnedWinPlayerIndex != null && _tugOfWarGameData.unearnedWinPlayerIndex.Contains(_inGameController.MyIndex);
+
+        _isPlaying = isPlaying;
+        _isLeftTeam = _tugOfWarGameData.leftTeamPlayerIndex.Contains(_inGameController.MyIndex);
+
 
         if (_unearnedWinNotice != null)
         {
@@ -85,6 +92,8 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
         CreatePlayerCharacters();
 
         _noticeText.text = "";
+
+        
 
         StartCoroutine(ShowInstructionsAndReady());
         
@@ -116,7 +125,14 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
         _isTimerRunning = true;
         _pressCount = 0;
         _deltaPressCountMovingAverage = 0.0f;
-        _keepSendingPressCountToServerCoroutine = StartCoroutine(CO_KeepSendingPressCountToServer());
+
+
+        bool isPlaying = _tugOfWarGameData.leftTeamPlayerIndex.Contains(_inGameController.MyIndex) || _tugOfWarGameData.rightTeamPlayerIndex.Contains(_inGameController.MyIndex);
+        
+        if (isPlaying)
+        {
+            _keepSendingPressCountToServerCoroutine = StartCoroutine(CO_KeepSendingPressCountToServer());
+        }
 
         _noticeText.text = "스페이스 바를 연타하세요!";
 
@@ -254,7 +270,7 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
 
     private void UpdateViewUsingDeltaPressCount()
     {
-        float sigmoidDeltaMovingAverage = 2.0f / (1.0f + Mathf.Exp(-0.3f * _deltaPressCountMovingAverage)) - 1.0f;
+        float sigmoidDeltaMovingAverage = 2.0f / (1.0f + Mathf.Exp(-0.02f * _deltaPressCountMovingAverage)) - 1.0f;
         float clampedDeltaMovingAverage = Mathf.Clamp(sigmoidDeltaMovingAverage, -1.0f, 1.0f);
 
         _ropeAndPlayer.transform.localPosition = new Vector3(clampedDeltaMovingAverage * (- 300.0f), 0.0f, 0.0f);
@@ -268,7 +284,27 @@ public class TugOfWarController : MonoBehaviour, ISubGameController
         if (Input.GetKeyDown(KeyCode.Space))
         {
             _spaceBarAnimator.SetTrigger("Press");
-            _pressCount++;
+            
+
+            int score = 5;
+
+            int winningCount = _deltaPressCount * (_isLeftTeam ? +1 : -1);
+
+            if (winningCount < 0)
+            {
+                score = 6;
+            }
+            else if (winningCount < -50)
+            {
+                score = 8;
+            }
+            else if (winningCount < -100)
+            {
+                score = 10;
+            }
+
+            _pressCount += score;
+
         }
     }
 

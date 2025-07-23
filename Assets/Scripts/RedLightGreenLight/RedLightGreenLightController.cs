@@ -91,7 +91,11 @@ public class RedLightGreenLightController : MonoBehaviour, ISubGameController
 
         Utils.Log("RedLightGreenLightController.OnSubGameStarted");
         _isGameStarted = true;
-        _keepSendMyPositionCoroutine = StartCoroutine(CO_KeepSendMyPosition());
+
+        if (_isMePlaying)
+        {
+            _keepSendMyPositionCoroutine = StartCoroutine(CO_KeepSendMyPosition());
+        }
     }
 
     private IEnumerator CO_KeepSendMyPosition()
@@ -121,6 +125,21 @@ public class RedLightGreenLightController : MonoBehaviour, ISubGameController
 
             _myProgressVelocity = Mathf.Clamp(_myProgressVelocity - (Time.deltaTime * 0.14f), 0f, _velocityLimit);
         }
+
+        #if DEBUG
+
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            NetworkManager.Instance.SendMessageToServer(new RequestPacketData.RedLightGreenLightPlayerResult(true));
+            PlayerIsPlaying[MyIndex] = false;
+        }
+        else if (Input.GetKeyDown(KeyCode.F))
+        {
+            NetworkManager.Instance.SendMessageToServer(new RequestPacketData.RedLightGreenLightPlayerResult(false));
+            PlayerIsPlaying[MyIndex] = false;
+        }
+
+        #endif
 
     }
 
@@ -257,8 +276,12 @@ public class RedLightGreenLightController : MonoBehaviour, ISubGameController
 
             PlayerIsPlaying = Utils.CreateFill1D(PlayerCount, false);
             _isGameStarted = false;
-            StopCoroutine(_keepSendMyPositionCoroutine);
-
+            
+            if (_keepSendMyPositionCoroutine != null)
+            {
+                StopCoroutine(_keepSendMyPositionCoroutine);
+                _keepSendMyPositionCoroutine = null;
+            }
             
         }
     }

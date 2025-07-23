@@ -86,6 +86,20 @@ public class DalgonaController : MonoBehaviour, ISubGameController
             OnSuccess();
         }
 #endif
+
+
+        #if DEBUG
+
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            OnSuccess();
+        }
+        else if (Input.GetKeyDown(KeyCode.F))
+        {
+            OnFail();
+        }
+
+        #endif
     }
     
     private void UpdateTimerUI()

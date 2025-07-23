@@ -35,14 +35,19 @@ public class InGameDrawer : MonoBehaviour
     {
         ClearSurvivePlayers();
 
+        bool isMeAlive = false;
+
         for (var i = 0; i < data.survivePlayerIndices.Length; i++)
         {
             SurvivePlayerComponent survivePlayerItem = Instantiate(_survivePlayerItemPrefab, _survivePlayerItemParent);
             survivePlayerItem.UpdateSurvivePlayer(data.survivePlayerIndices[i], _inGameController.PlayerNames[data.survivePlayerIndices[i]], data.survivePlayerIndices[i] == _inGameController.MyIndex);
+            if (data.survivePlayerIndices[i] == _inGameController.MyIndex)
+            {
+                isMeAlive = true;
+            }
         }
 
-        
-        _deathIndicatorAnimator.SetBool("Lose", !data.survivePlayerIndices.Contains(_inGameController.MyIndex));
+        _deathIndicatorAnimator.SetBool("Lose", !isMeAlive);
     }
 
     private void ClearSurvivePlayers()
