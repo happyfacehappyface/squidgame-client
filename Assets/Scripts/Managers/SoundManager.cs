@@ -43,6 +43,7 @@ public class SoundManager : MonoBehaviour
     [SerializeField] private AudioClip[] _sfxJump;
     [SerializeField] private AudioClip[] _sfxRock;
     [SerializeField] private AudioClip[] _sfxAir;
+    [SerializeField] private AudioClip[] _sfxDice;
 
 
     [SerializeField] private AudioClip[] _bgmOutGame;
@@ -99,6 +100,8 @@ public class SoundManager : MonoBehaviour
     public void PlaySfxJump(float delay) => PlayRandomSfx(_sfxJump, delay);
     public void PlaySfxRock(float delay) => PlayRandomSfx(_sfxRock, delay);
     public void PlaySfxAir(float delay) => PlayRandomSfx(_sfxAir, delay);
+
+    public void PlaySfxDice(float delay) => PlayRandomSfx(_sfxDice, delay);
 
     public void PlayBgmOutGame(bool loop = true) => PlayRandomBgm(_bgmOutGame, loop);
 

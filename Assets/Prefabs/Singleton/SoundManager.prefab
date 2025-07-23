@@ -107,6 +107,8 @@ MonoBehaviour:
   - {fileID: 8300000, guid: bcb42203012c413408f48fe360feca5d, type: 3}
   _sfxAir:
   - {fileID: 8300000, guid: 52bec86dc209b2b4792d47b68054e64b, type: 3}
+  _sfxDice:
+  - {fileID: 8300000, guid: 06319c9108833fd46b7f8a28d8de6433, type: 3}
   _bgmOutGame:
   - {fileID: 8300000, guid: 33dc448fbe3b27043b0d8bec58a3ee71, type: 3}
 --- !u!82 &4254529009597376877

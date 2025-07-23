@@ -169,4 +169,11 @@ public class OutGameController : MonoBehaviour
         string[] candidate = new string[] {"동현", "승준", "재헌", "재현", "지민", "창민", "하민", "서우", "현우", "한준", "광호", "서우", "서우", "서우", "서우"};
         return candidate[Random.Range(0, candidate.Length)];
     }
+
+    public void OnClickShuffleName()
+    {
+        _playerName = GenerateRandomPlayerName();
+        _playerNameInputField.text = _playerName;
+        SoundManager.Instance.PlaySfxDice(0.0f);
+    }
 }
